@@ -36,3 +36,21 @@ class WordDebtGame:
             raise ValueError(f"Player with id {player.user_id} already exists")
         state[player.user_id] = player
         self._state = state
+
+    def submit_words(self, player_id: str, amount: int):
+        if amount <= 0:
+            raise ValueError(f"amount must be positive")
+        state = self._state
+        player = state[player_id]
+        player.word_debt -= amount
+        player.crane_payment_rollover += amount
+        player.cranes += player.crane_payment_rollover // 1000
+        player.crane_payment_rollover %= 1000
+        self._state = state
+
+    def add_debt(self, player_id: str, amount: int):
+        if amount <= 0:
+            raise ValueError(f"amount must be positive")
+        state = self._state
+        state[player_id].word_debt += amount
+        self._state = state
