@@ -1,6 +1,9 @@
 import json
 import os.path
 import pathlib
+from dataclasses import asdict
+
+from .player import WordDebtPlayer
 
 
 class WordDebtGame:
@@ -18,9 +21,18 @@ class WordDebtGame:
     @property
     def _state(self):
         with open(self.path, "r") as state_file:
-            return json.load(state_file)
+            raw_dict = json.load(state_file)
+        return {key: WordDebtPlayer(**value) for key, value in raw_dict.items()}
 
     @_state.setter
-    def _state(self, new_state: dict[int, dict]):
+    def _state(self, new_state: dict[str, WordDebtPlayer]):
+        serialized = {key: asdict(value) for key, value in new_state.items()}
         with open(self.path, "w") as state_file:
-            json.dump(new_state, state_file)
+            json.dump(serialized, state_file)
+
+    def register_player(self, player: WordDebtPlayer):
+        state = self._state
+        if player.user_id in state:
+            raise ValueError(f"Player with id {player.user_id} already exists")
+        state[player.user_id] = player
+        self._state = state
