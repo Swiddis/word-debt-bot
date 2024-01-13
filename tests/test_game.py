@@ -42,7 +42,7 @@ def test_game_accepts_payment(game, player):
     game.submit_words(player.user_id, 2500)
     updated = game._state[player.user_id]
     assert updated.word_debt == 7500
-    assert updated.cranes == 2
+    assert updated.cranes == 4
     assert updated.crane_payment_rollover == 500
 
 
@@ -53,8 +53,17 @@ def test_game_handles_rollover(game, player):
     game.submit_words(player.user_id, 1250)
     updated = game._state[player.user_id]
     assert updated.word_debt == 7500
-    assert updated.cranes == 2
+    assert updated.cranes == 4
     assert updated.crane_payment_rollover == 500
+
+
+def test_game_handles_empty_debt(game, player):
+    game.register_player(player)
+    game.add_debt(player.user_id, 5000)
+    game.submit_words(player.user_id, 10000)
+    updated = game._state[player.user_id]
+    assert updated.word_debt == 0
+    assert updated.cranes == 20
 
 
 def test_game_rejects_negative_payment(game, player):

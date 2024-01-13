@@ -42,9 +42,9 @@ class WordDebtGame:
             raise ValueError(f"amount must be positive")
         state = self._state
         player = state[player_id]
-        player.word_debt -= amount
+        player.word_debt = max(player.word_debt - amount, 0)
         player.crane_payment_rollover += amount
-        player.cranes += player.crane_payment_rollover // 1000
+        player.cranes += 2 * (player.crane_payment_rollover // 1000)
         player.crane_payment_rollover %= 1000
         self._state = state
 
