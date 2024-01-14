@@ -264,6 +264,21 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-asyncio"
+version = "0.23.3"
+description = "Pytest support for asyncio"
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[package.extras]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
+
+[[package]]
 name = "pytest-cov"
 version = "4.1.0"
 description = "Pytest plugin for measuring coverage."
@@ -326,7 +341,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "739499ef43ca6a78e9ad923ca5cabbf92384959113308b54f0274e8f6d347f26"
+content-hash = "d8a2adb6f78524db0e4650d684b54ef1324b99ee1fa492e4467817be48848936"
 
 [metadata.files]
 aiohttp = []
@@ -352,6 +367,7 @@ platformdirs = []
 pluggy = []
 pre-commit = []
 pytest = []
+pytest-asyncio = []
 pytest-cov = []
 pyyaml = []
 tomli = []

@@ -4,7 +4,7 @@ import pathlib
 
 import discord
 
-from client import WordDebtClient
+from core import bot
 from game import WordDebtGame
 
 
@@ -30,5 +30,4 @@ if __name__ == "__main__":
     token = get_token(pathlib.Path("data/TOKEN"))
 
     # Starting the bot
-    client = WordDebtClient(intents=intents)
-    client.run(token, log_handler=handler, log_level=logging.INFO)
+    bot.run(token, log_handler=handler, log_level=logging.INFO)
