@@ -1,21 +1,34 @@
+import logging
 import os
 import pathlib
 
+import discord
+
+from client import WordDebtClient
 from game import WordDebtGame
 
-TOKEN_PATH = pathlib.Path("data/TOKEN")
-DB_PATH = pathlib.Path("data/prod.json")
 
-
-def get_token():
-    if not os.path.exists(TOKEN_PATH):
+def get_token(token_path):
+    if not os.path.exists(token_path):
         raise FileNotFoundError(
-            f"Missing TOKEN file. The bot requires a Discord bot token at `{TOKEN_PATH}` to run."
+            f"Missing TOKEN file. The bot requires a Discord bot token at `{token_path}` to run."
         )
-    with open(TOKEN_PATH, "r") as token_file:
+    with open(token_path, "r") as token_file:
         return token_file.read()
 
 
 if __name__ == "__main__":
-    token = get_token()
-    game = WordDebtGame(DB_PATH)
+    # Config
+    intents = discord.Intents.default()
+    intents.message_content = True
+    handler = logging.FileHandler(
+        filename=pathlib.Path("data/discord.log"), encoding="utf-8", mode="a"
+    )
+
+    # Loading data
+    game = WordDebtGame(pathlib.Path("data/prod.json"))
+    token = get_token(pathlib.Path("data/TOKEN"))
+
+    # Starting the bot
+    client = WordDebtClient(intents=intents)
+    client.run(token, log_handler=handler, log_level=logging.INFO)
