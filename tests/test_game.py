@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from src.game import WordDebtGame, WordDebtPlayer
+from src.word_debt_bot.game import WordDebtGame, WordDebtPlayer
 
 
 @pytest.fixture

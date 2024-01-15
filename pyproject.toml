@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "word-debt-bot"
+name = "word_debt_bot"
 version = "0.1.0"
 description = "A Discord bot for running a little reading game."
 authors = ["Simeon Widdis <sawiddis@gmail.com>"]
