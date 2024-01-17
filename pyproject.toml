@@ -16,6 +16,9 @@ pre-commit = "^3.6.0"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.23.3"
 
+[tool.poetry.group.dev.dependencies]
+callee = "^0.3.1"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
