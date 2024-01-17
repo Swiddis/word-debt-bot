@@ -1,21 +1,11 @@
 from unittest.mock import AsyncMock
-import discord
 
 import pytest
 
 import src.word_debt_bot.core as core
 
-from .test_game import game
+from .fixtures import *
 from callee import String, Regex
-
-
-@pytest.fixture
-def bot(game: core.WordDebtGame) -> core.WordDebtBot:
-    intents = discord.Intents.default()
-    intents.message_content = True
-    bot = core.WordDebtBot(command_prefix='.', intents=intents)
-    bot.game = game
-    return bot
 
 
 @pytest.mark.asyncio

@@ -1,26 +1,7 @@
-import pathlib
-import random
-import string
-import tempfile
-
 import pytest
 
-from src.word_debt_bot.game import WordDebtGame, WordDebtPlayer
+from .fixtures import *
 import src.word_debt_bot.core as core
-
-
-@pytest.fixture
-def game() -> WordDebtGame:
-    state_file_path = tempfile.mkstemp(suffix=".json")
-    return WordDebtGame(pathlib.Path(state_file_path[1]))
-
-
-@pytest.fixture
-def player() -> WordDebtPlayer:
-    user_id = str(random.randint(10**7, 10**8 - 1))
-    user_name = "".join(random.choice(string.ascii_lowercase) for _ in range(8))
-    return WordDebtPlayer(user_id, user_name)
-
 
 def test_game_initializes(game: core.WordDebtGame):
     assert game._state == {}

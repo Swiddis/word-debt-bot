@@ -1,5 +1,6 @@
 import importlib.metadata
 import json
+import pathlib
 import subprocess
 from datetime import datetime
 
@@ -12,10 +13,11 @@ from .game import WordDebtPlayer
 
 class WordDebtBot(commands.Bot):
     game: WordDebtGame | None = None
+    journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson")
 
     def journal(self, entry: dict) -> None:
         entry["time"] = datetime.now().timestamp()
-        with open("data/journal.ndjson", "a") as logfile:
+        with open(self.journal_path, "a") as logfile:
             logfile.write(json.dumps(entry) + "\n")
 
 
