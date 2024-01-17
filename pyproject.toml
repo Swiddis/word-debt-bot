@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "word_debt_bot"
+version = "1.0.0"
+description = "A Discord bot for running a little reading game."
+authors = ["Simeon Widdis <sawiddis@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+beartype = "^0.16.4"
+"discord.py" = "^2.3.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+pre-commit = "^3.6.0"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.23.3"
+callee = "^0.3.1"
+dpytest = "^0.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
