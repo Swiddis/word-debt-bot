@@ -37,3 +37,7 @@ $ poetry run pytest
 ...
 === N passed in Y.Zs ===
 ```
+
+## Contributing
+
+All contributions are welcome!
