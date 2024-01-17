@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from beartype import beartype
+
 
 @dataclass
 class WordDebtPlayer:
