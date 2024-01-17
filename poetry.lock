@@ -258,7 +258,7 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
-name = "discord.py"
+name = "discord-py"
 version = "2.3.2"
 description = "A Python wrapper for the Discord API"
 optional = false
@@ -866,4 +866,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "81d411b824fe77b6c7c3c616b61ceb87153c7521e6d98a1b58202b0274d0cd9c"
+content-hash = "73bea22aafdf2ab680ec95e29b3913a008de9602c1b72485173b21bd5b828cf6"
