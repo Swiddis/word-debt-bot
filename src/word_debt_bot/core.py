@@ -1,6 +1,7 @@
 import importlib.metadata
 import json
 import subprocess
+from datetime import datetime
 
 import discord
 from discord.ext import commands
@@ -13,6 +14,7 @@ bot = commands.Bot(".", intents=_intents)
 
 
 def journal(entry: dict) -> None:
+    entry["time"] = datetime.now().timestamp()
     with open("data/journal.ndjson", "a") as logfile:
         logfile.write(json.dumps(entry) + "\n")
 
