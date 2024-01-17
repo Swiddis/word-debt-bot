@@ -4,32 +4,39 @@ import pathlib
 import subprocess
 from datetime import datetime
 
-from discord.ext import commands
+import discord
+import discord.ext.commands as commands
 
-from word_debt_bot.game.core import WordDebtGame
+import word_debt_bot.client as client
+import word_debt_bot.game as game
 
-from .game import WordDebtPlayer
 
-
-class WordDebtBot(commands.Bot):
-    game: WordDebtGame | None = None
-    journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson")
+class GameCommands(commands.Cog, name="Core Gameplay Module"):
+    def __init__(
+        self,
+        bot: client.WordDebtBot,
+        game: game.WordDebtGame,
+        journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson"),
+    ):
+        self.bot = bot
+        self.game = game
+        self.journal_path = journal_path
 
     def journal(self, entry: dict) -> None:
         entry["time"] = datetime.now().timestamp()
         with open(self.journal_path, "a") as logfile:
             logfile.write(json.dumps(entry) + "\n")
 
-
-    @commands.command()
+    @commands.command(name="ping")
     async def ping(self, ctx):
         if self.game:
             await ctx.send("Pong! All systems normal.")
         else:
-            await ctx.send("I'm alive, but I'm not sure where Toast hid the game state...")
+            await ctx.send(
+                "I'm alive, but I'm not sure where Toast hid the game state..."
+            )
 
-
-    @commands.command()
+    @commands.command(name="version")
     async def version(self, ctx):
         version = importlib.metadata.version("word_debt_bot")
         commit = subprocess.check_output(
@@ -37,13 +44,12 @@ class WordDebtBot(commands.Bot):
         )
         await ctx.send(f"Version: {version}\nCommit: {commit}")
 
-
-    @commands.command()
+    @commands.command(name="register")
     async def register(self, ctx):
         if not self.game:
             await ctx.send("Game not loaded. (Yell at Toast!)")
             return
-        player = WordDebtPlayer(str(ctx.author.id), ctx.author.name, 10_000)
+        player = game.WordDebtPlayer(str(ctx.author.id), ctx.author.name, 10_000)
         try:
             self.game.register_player(player)
             self.journal({"command": "register", "user": str(ctx.author.id)})
@@ -51,8 +57,7 @@ class WordDebtBot(commands.Bot):
         except ValueError:
             await ctx.send("Already registered!")
 
-
-    @commands.command()
+    @commands.command(name="log")
     async def log(self, ctx, words: int):
         if not self.game:
             await ctx.send("Game not loaded. (Yell at Toast!)")
