@@ -2,6 +2,7 @@ import random
 import string
 
 import discord
+import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
 
@@ -35,8 +36,13 @@ def game_commands_cog(game_state, tmp_path) -> cogs.GameCommands:
 async def bot(game_state, tmp_path) -> client.WordDebtBot:
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True  # Not required for actual bot but needed for test framework
 
     bot = client.WordDebtBot(command_prefix=".", intents=intents)
+    await bot._async_setup_hook()
     await bot.add_cog(cogs.GameCommands(bot, game_state, tmp_path / "journal.ndjson"))
+    dpytest.configure(bot)
 
-    return bot
+    yield bot
+
+    await dpytest.empty_queue()
