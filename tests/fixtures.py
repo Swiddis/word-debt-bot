@@ -1,26 +1,20 @@
+import os
 import pathlib
 import random
 import string
 import tempfile
+
 import discord
 import pytest
-import os
-from word_debt_bot import core
 
+from word_debt_bot import core
 from word_debt_bot.game.core import WordDebtGame
 from word_debt_bot.game.player import WordDebtPlayer
 
 
 @pytest.fixture
-def filepath() -> pathlib.Path:
-    file_path = tempfile.mkstemp()
-    yield pathlib.Path(file_path[1])
-    os.remove(file_path[1])
-
-
-@pytest.fixture
-def game(filepath: pathlib.Path) -> WordDebtGame:
-    return WordDebtGame(filepath)
+def game(tmp_path: pathlib.Path) -> WordDebtGame:
+    return WordDebtGame(tmp_path / "state.json")
 
 
 @pytest.fixture
@@ -31,12 +25,12 @@ def player() -> WordDebtPlayer:
 
 
 @pytest.fixture
-def bot(game: core.WordDebtGame, filepath: pathlib.Path) -> core.WordDebtBot:
+def bot(game: core.WordDebtGame, tmp_path: pathlib.Path) -> core.WordDebtBot:
     intents = discord.Intents.default()
     intents.message_content = True
 
-    bot = core.WordDebtBot(command_prefix='.', intents=intents)
+    bot = core.WordDebtBot(command_prefix=".", intents=intents)
     bot.game = game
-    bot.journal_path = filepath
+    bot.journal_path = tmp_path / "journal.ndjson"
 
     return bot
