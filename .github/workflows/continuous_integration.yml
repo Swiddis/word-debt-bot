@@ -26,3 +26,22 @@ jobs:
         run: poetry install
       - name: Run automated tests
         run: poetry run pytest -v
+  deploy:
+    name: Deploy to VPS
+    if: ${{ github.ref == 'refs/heads/feature/deployment' }}
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          passphrase: ${{ secrets.VPS_PASSPHRASE }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          script: |
+            cd word-debt-bot
+            git pull
+            docker compose build
+            docker compose restart
