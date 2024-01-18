@@ -44,4 +44,4 @@ jobs:
             cd word-debt-bot
             git pull
             docker compose build
-            docker compose restart
+            docker compose up word_debt_bot --detach
