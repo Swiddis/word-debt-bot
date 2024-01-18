@@ -18,7 +18,14 @@ A bot token needs to be provided in `data/TOKEN`.
 
 ```sh
 $ poetry run python3 src/word_debt_bot/main.py
-# No output
+[Name] is ready.
+```
+
+You can also use Docker, and skip dealing with Poetry directly:
+
+```sh
+$ docker compose up --build
+Attaching to word_debt_bot
 ```
 
 ## Development

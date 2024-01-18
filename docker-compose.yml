@@ -1,0 +1,6 @@
+services:
+  word_debt_bot:
+    build: .
+    container_name: word_debt_bot
+    volumes:
+      - ./data:/app/data
