@@ -18,7 +18,15 @@ A bot token needs to be provided in `data/TOKEN`.
 
 ```sh
 $ poetry run python3 src/word_debt_bot/main.py
-# No output
+[Name] is ready.
+```
+
+You can also use Docker, and skip dealing with Poetry directly.
+This still requires a `TOKEN` file, the local `./data` is used as a volume.
+
+```sh
+$ docker compose up --build
+Attaching to word_debt_bot
 ```
 
 ## Development
@@ -41,3 +49,4 @@ $ poetry run pytest
 ## Contributing
 
 All contributions are welcome!
+Please direct PRs to the `dev` branch, features will be bundled in a release with other contributions.

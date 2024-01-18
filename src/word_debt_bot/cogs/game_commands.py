@@ -39,10 +39,7 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
     @commands.command(name="version")
     async def version(self, ctx):
         version = importlib.metadata.version("word_debt_bot")
-        commit = subprocess.check_output(
-            ["git", "rev-parse", "--short", "HEAD"], encoding="utf-8"
-        )
-        await ctx.send(f"Version: {version}\nCommit: {commit}")
+        await ctx.send(f"Version: {version}")
 
     @commands.command(name="register")
     async def register(self, ctx):
