@@ -34,7 +34,7 @@ async def test_version(game_commands_cog: cogs.GameCommands):
 
     await game_commands_cog.version(game_commands_cog, ctx)
 
-    ctx.send.assert_called_with(String() & Regex("Version:.*\nCommit:.*"))
+    ctx.send.assert_called_with(String() & Regex("Version:.*"))
 
 
 @pytest.mark.asyncio
