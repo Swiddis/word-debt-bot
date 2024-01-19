@@ -58,7 +58,9 @@ class WordDebtGame:
 
     def create_leaderboard(self, sort_by: str, lb_len: int):
         if sort_by not in ["debt", "cranes"]:
-            raise ValueError(f"ordering is done by 'debt' or 'cranes'")
+            raise ValueError("ordering is done by 'debt' or 'cranes'")
+        if lb_len < 1:
+            raise ValueError("requested leaderboard length must be 1 or greater")
         # Make a sort key and sort users
         if sort_by == "debt":
             key = lambda u: u[1].word_debt
