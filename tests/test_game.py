@@ -73,3 +73,26 @@ def test_game_rejects_negative_debt(
     game_state.register_player(player)
     with pytest.raises(ValueError):
         game_state.add_debt(player.user_id, -10000)
+
+
+def test_game_rejects_invalid_leaderboard_length(game_state: game.WordDebtGame):
+    with pytest.raises(ValueError):
+        game_state.create_leaderboard("debt", 0)
+
+
+def test_game_rejects_invalid_leaderboard_sorting(game_state: game.WordDebtGame):
+    with pytest.raises(ValueError):
+        game_state.create_leaderboard("INVALID", 1)
+
+
+def test_game_produces_valid_leaderboard(
+    game_state: game.WordDebtGame, player: game.WordDebtPlayer
+):
+    player.display_name = "test_name"
+    player.word_debt = 10000
+    player.cranes = 0
+    game_state.register_player(player)
+    assert (
+        game_state.create_leaderboard("debt", 1)
+        == f"1. {player.display_name} - {player.word_debt:,} debt - {player.cranes:,} cranes\n"
+    )

@@ -128,3 +128,22 @@ async def test_submit_words_no_game(
     await game_commands_cog.log(game_commands_cog, ctx, 1000)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
+
+
+@pytest.mark.asyncio
+async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameCommands):
+    ctx = AsyncMock()
+
+    await game_commands_cog.leaderboard(game_commands_cog, ctx)
+
+    ctx.send.assert_called_with(String() & Regex("No registered users.*"))
+
+
+@pytest.mark.asyncio
+async def test_request_leaderboard_no_game(game_commands_cog: cogs.GameCommands):
+    ctx = AsyncMock()
+    game_commands_cog.game = None
+
+    await game_commands_cog.leaderboard(game_commands_cog, ctx)
+
+    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
