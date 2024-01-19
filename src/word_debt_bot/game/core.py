@@ -56,7 +56,7 @@ class WordDebtGame:
         state[player_id].word_debt += amount
         self._state = state
 
-    def create_leaderboard(self, sort_by, lb_len):
+    def create_leaderboard(self, sort_by: str, lb_len: int):
         if sort_by not in ["debt", "cranes"]:
             raise ValueError(f"ordering is done by 'debt' or 'cranes'")
         # Make a sort key and sort users
