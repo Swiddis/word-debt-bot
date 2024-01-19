@@ -67,3 +67,14 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
             await ctx.send("Not registered! `.register`")
         except ValueError as err:
             await ctx.send(f"Error: {str(err)}")
+
+    @commands.command(name="leaderboard")
+    async def leaderboard(self, ctx, sort_by: str = "debt", lb_len: int = 5):
+        if not self.game:
+            await ctx.send("Game not loaded. (Yell at Toast more!)")
+            return
+        lb = self.game.create_leaderboard(sort_by, lb_len)
+        if lb == "":
+            await ctx.send("No users have registered, a leaderboard could not be made!")
+            return
+        await ctx.send(lb)
