@@ -69,15 +69,15 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
             await ctx.send(f"Error: {str(err)}")
 
     @commands.command(name="leaderboard")
-    async def leaderboard(self, ctx, sort_by: str = "debt", lb_len: int = 5):
+    async def leaderboard(self, ctx, sort_by: str = "debt", req_pg: int = 1):
         if not self.game:
             await ctx.send("Game not loaded. (Yell at Toast more!)")
             return
         try:
-            lb = self.game.create_leaderboard(sort_by, lb_len)
-            if lb == "":
+            pg = self.game.get_leaderboard_page(sort_by, req_pg)
+            if pg == "":
                 await ctx.send("No registered users, a leaderboard could not be made!")
                 return
-            await ctx.send(lb)
+            await ctx.send(pg)
         except ValueError as err:
             await ctx.send(f"Error: {str(err)}")
