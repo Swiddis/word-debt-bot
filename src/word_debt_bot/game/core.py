@@ -57,23 +57,26 @@ class WordDebtGame:
         self._state = state
 
     def create_leaderboard(self, sort_by: str, lb_len: int):
+        sort_by = sort_by.lower()
         if sort_by not in ["debt", "cranes"]:
             raise ValueError("ordering is done by 'debt' or 'cranes'")
         if lb_len < 1:
             raise ValueError("requested leaderboard length must be 1 or greater")
         # Make a sort key and sort users
         if sort_by == "debt":
-            key = lambda u: u[1].word_debt
+            key = lambda u: u.word_debt
         elif sort_by == "cranes":
-            key = lambda u: u[1].cranes
-        users = sorted(self._state.items(), key=key, reverse=True)
-
+            key = lambda u: u.cranes
+        users = sorted(self._state.values(), key=key, reverse=True)
+        users = list(enumerate(users, start=1))
         # Produce leaderboard string to return
         lb = ""
-        i = 1
-        for u in users:
-            lb += f"{i}. {u[1].display_name} - {u[1].word_debt:,} debt - {u[1].cranes:,} cranes\n"
-            i += 1
-            if i > lb_len:
+        for i, u in users[:lb_len]:
+            entry = (
+                f"{i}. {u.display_name} - {u.word_debt:,} debt - {u.cranes:,} cranes\n"
+            )
+            if len(lb + entry) > 2000:
                 break
+            lb += entry
+
         return lb
