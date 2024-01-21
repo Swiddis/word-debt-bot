@@ -12,7 +12,7 @@ CURRENT_SERIALIZATION_VERSION = 1
 
 
 def do_state_migration(state: dict):
-    if not state["version"]:  # Implicit version 0: Users are entire state
+    if not state.get("version"):  # Implicit version 0: Users are entire state
         return {
             "version": 1,
             "users": state,

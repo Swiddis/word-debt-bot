@@ -1,3 +1,7 @@
+import json
+import pathlib
+from dataclasses import asdict
+
 import pytest
 
 from word_debt_bot import game
@@ -7,6 +11,23 @@ from .fixtures import *
 
 def test_game_initializes_with_correct_version(game_state: game.WordDebtGame):
     assert game_state._state.version == 1
+
+
+def test_game_migration_v0_to_v1(tmp_path: pathlib.Path):
+    state_v0 = {
+        "197": {
+            "user_id": "197",
+            "display_name": "abc",
+            "word_debt": 100,
+            "crane_payment_rollover": 0,
+            "cranes": 0,
+        }
+    }
+    with open(tmp_path / "state.json", "w") as statefile:
+        json.dump(state_v0, statefile)
+    game_instance = game.WordDebtGame(tmp_path / "state.json")
+    assert game_instance._state.version == 1
+    assert asdict(game_instance._state)["users"] == state_v0
 
 
 def test_game_registers_player(
