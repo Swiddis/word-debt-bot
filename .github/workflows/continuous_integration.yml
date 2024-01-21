@@ -3,9 +3,11 @@ name: Continuous Integration
 on: [push, pull_request]
 
 jobs:
+  setup:
+    uses: ./.github/workflows/poetry_setup.yml
   tests:
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/poetry_setup.yml
+    needs: setup
     steps:
       - name: Run automated tests
         run: poetry run pytest -v

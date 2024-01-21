@@ -3,10 +3,11 @@ name: Lint
 on: [push, pull_request]
 
 jobs:
+  setup:
+    uses: ./.github/workflows/poetry_setup.yml
   lint:
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/poetry_setup.yml
-
+    needs: setup
     steps:
       - uses: actions/checkout@v4
       - name: Lint code
