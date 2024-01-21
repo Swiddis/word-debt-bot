@@ -26,8 +26,8 @@ jobs:
         run: poetry install
       - name: Lint code
         run: |
-          black .
-          isort .
+          poetry run black .
+          poetry run isort .
       - name: Check for changes
         run: |
           git diff --exit-code || (echo "Code is not formatted correctly. Please run 'black .' and 'isort .'" && exit 1)
