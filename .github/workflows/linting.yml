@@ -1,0 +1,20 @@
+name: Lint
+
+on:
+  pull_request:
+    paths:
+      - "**/*.py"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ./.github/workflows/poetry_setup.yml
+      - name: Lint code
+        run: |
+          black .
+          isort .
+      - name: Check for changes
+        run: |
+          git diff --exit-code || (echo "Code is not formatted correctly. Please run 'black .' and 'isort .'" && exit 1)
