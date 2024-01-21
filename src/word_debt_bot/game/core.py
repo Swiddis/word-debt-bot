@@ -4,7 +4,23 @@ import os.path
 import pathlib
 from dataclasses import asdict
 
+from word_debt_bot.game.state import WordDebtState
+
 from .player import WordDebtPlayer
+
+CURRENT_SERIALIZATION_VERSION = 1
+
+
+def do_state_migration(state: dict):
+    if not state["version"]:  # Implicit version 0: Users are entire state
+        return {
+            "version": 1,
+            "users": state,
+            "modifiers": [],
+        }
+    if state["version"] != 1:
+        raise ValueError("Unknown state version -- Unable to initialize")
+    return state
 
 
 class WordDebtGame:
@@ -15,34 +31,38 @@ class WordDebtGame:
     def init_state(self):
         # If the file is nonexistent or empty, start a new game
         if not self.path.is_file() or os.path.getsize(self.path) == 0:
-            self._state = {}
-        # Check that state is readable (provided file is actually json)
-        self._state
+            self._state = WordDebtState(version=1, users={}, modifiers=[])
+        # Assert that state is readable
+        self._state = self._state
 
     @property
     def _state(self):
         with open(self.path, "r") as state_file:
             raw_dict = json.load(state_file)
-        return {key: WordDebtPlayer(**value) for key, value in raw_dict.items()}
+        if "version" not in raw_dict:
+            raw_dict = do_state_migration(raw_dict)
+        if raw_dict["version"] == CURRENT_SERIALIZATION_VERSION:
+            return WordDebtState(**raw_dict)
+        else:
+            raise ValueError("Invalid version")
 
     @_state.setter
-    def _state(self, new_state: dict[str, WordDebtPlayer]):
-        serialized = {key: asdict(value) for key, value in new_state.items()}
+    def _state(self, new_state: WordDebtState):
         with open(self.path, "w") as state_file:
-            json.dump(serialized, state_file)
+            json.dump(asdict(new_state), state_file)
 
     def register_player(self, player: WordDebtPlayer):
         state = self._state
-        if player.user_id in state:
+        if player.user_id in state.users:
             raise ValueError(f"Player with id {player.user_id} already exists")
-        state[player.user_id] = player
+        state.users[player.user_id] = player
         self._state = state
 
     def submit_words(self, player_id: str, amount: int) -> int:
         if amount <= 0:
             raise ValueError(f"amount must be positive")
         state = self._state
-        player = state[player_id]
+        player = state.users[player_id]
         player.word_debt = max(player.word_debt - amount, 0)
         player.crane_payment_rollover += amount
         player.cranes += 2 * (player.crane_payment_rollover // 1000)
@@ -54,7 +74,7 @@ class WordDebtGame:
         if amount <= 0:
             raise ValueError(f"amount must be positive")
         state = self._state
-        state[player_id].word_debt += amount
+        state.users[player_id].word_debt += amount
         self._state = state
 
     def get_leaderboard_page(self, sort_by: str, req_pg: int):
@@ -68,7 +88,7 @@ class WordDebtGame:
             key = lambda u: u.word_debt
         elif sort_by == "cranes":
             key = lambda u: u.cranes
-        users = sorted(self._state.values(), key=key, reverse=True)
+        users = sorted(self._state.users.values(), key=key, reverse=True)
         users = list(enumerate(users, start=1))
         # Produce leaderboard string to return
         pg = ""
