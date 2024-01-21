@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: .github/workflows/poetry_setup.yml
+      - uses: ./.github/workflows/poetry_setup.yml
       - name: Run automated tests
         run: poetry run pytest -v
   deploy:
