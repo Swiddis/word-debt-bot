@@ -5,9 +5,8 @@ on: [push, pull_request]
 jobs:
   tests:
     runs-on: ubuntu-latest
+    uses: ./.github/workflows/poetry_setup.yml
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/poetry_setup.yml
       - name: Run automated tests
         run: poetry run pytest -v
   deploy:

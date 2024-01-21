@@ -5,10 +5,10 @@ on: [push, pull_request]
 jobs:
   lint:
     runs-on: ubuntu-latest
+    uses: ./.github/workflows/poetry_setup.yml
 
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/workflows/poetry_setup.yml
       - name: Lint code
         run: |
           black .
