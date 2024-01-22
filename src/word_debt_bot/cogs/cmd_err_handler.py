@@ -4,7 +4,7 @@ import word_debt_bot.client as client
 import word_debt_bot.game as game
 
 
-class CmdErrHandler(commands.Cog):
+class CmdErrHandler(commands.Cog, name="Command Error Handler"):
     def __init__(self, bot: client.WordDebtBot, game: game.WordDebtGame):
         self.bot = bot
         self.game = game
@@ -19,6 +19,10 @@ class CmdErrHandler(commands.Cog):
         error: commands.CommandError
             The Exception raised.
         """
+
+        # This prevents any commands with local handlers being handled here in on_command_error.
+        if hasattr(ctx.command, "on_error"):
+            return
 
         if isinstance(err, commands.CommandNotFound):
             await ctx.send(
@@ -59,4 +63,4 @@ class CmdErrHandler(commands.Cog):
             # TODO add handlers for the remaining exception types:
             # https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#exceptions
             # TODO Log base cases?
-            # TODO Unit test update!
+            # TODO Finish test_submit_words_no_game unit test

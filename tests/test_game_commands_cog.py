@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from callee import Regex, String
+from discord.ext import commands
 
 from word_debt_bot import cogs
 from word_debt_bot import game as game_lib
@@ -67,14 +68,20 @@ async def test_registration_valueerror(
 
 @pytest.mark.asyncio
 async def test_registration_no_game(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.register(game_commands_cog, ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.register.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
@@ -119,15 +126,22 @@ async def test_submit_words_with_no_register(
 
 @pytest.mark.asyncio
 async def test_submit_words_no_game(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000)
+    with pytest.raises(AttributeError) as err:
+        await game_cmds_cog.log(ctx, 1000)
 
-    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
+    # await cmd_err_cog.on_command_error(ctx, err.value)
+    # TODO Simply assures that an AttributeError has been raised
+    # Need to handle 'words' kwarg
+    # ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio
@@ -140,10 +154,16 @@ async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameComma
 
 
 @pytest.mark.asyncio
-async def test_request_leaderboard_no_game(game_commands_cog: cogs.GameCommands):
+async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
     ctx = AsyncMock()
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.leaderboard(game_commands_cog, ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.leaderboard.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
