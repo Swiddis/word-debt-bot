@@ -51,11 +51,12 @@ class CmdErrHandler(commands.Cog):
 
         else:
             await ctx.send(
+                "An unhandled error occured!"
                 f"Error: {str(err)}\n"
                 f"Type: {type(err)}\n"
                 f"For more information type '.help {ctx.command}'.\n"
-                "This was an unhandeld error! (Blame -> MO-W59)"
             )
             # TODO add handlers for the remaining exception types:
             # https://discordpy.readthedocs.io/en/latest/ext/commands/api.html#exceptions
             # TODO Log base cases?
+            # TODO Unit test update!
