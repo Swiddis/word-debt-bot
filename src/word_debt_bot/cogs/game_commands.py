@@ -43,9 +43,6 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="register")
     async def register(self, ctx):
-        if not self.game:
-            await ctx.send("Game not loaded. (Yell at Toast!)")
-            return
         player = game.WordDebtPlayer(str(ctx.author.id), ctx.author.name, 10_000)
         try:
             self.game.register_player(player)
@@ -56,9 +53,6 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="log")
     async def log(self, ctx, words: int):
-        if not self.game:
-            await ctx.send("Game not loaded. (Yell at Toast!)")
-            return
         try:
             new_debt = self.game.submit_words(str(ctx.author.id), words)
             self.journal({"command": "log", "words": words, "user": str(ctx.author.id)})
@@ -70,9 +64,6 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="leaderboard")
     async def leaderboard(self, ctx, sort_by: str = "debt", req_pg: int = 1):
-        if not self.game:
-            await ctx.send("Game not loaded. (Yell at Toast more!)")
-            return
         try:
             pg = self.game.get_leaderboard_page(sort_by, req_pg)
             if pg == "":
