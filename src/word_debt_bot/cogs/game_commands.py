@@ -1,10 +1,8 @@
 import importlib.metadata
 import json
 import pathlib
-import subprocess
 from datetime import datetime
 
-import discord
 import discord.ext.commands as commands
 
 import word_debt_bot.client as client
