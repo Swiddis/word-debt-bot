@@ -72,7 +72,7 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
             await ctx.send("Game not loaded. (Yell at Toast!)")
             return
         try:
-            new_debt = self.game.submit_words(str(ctx.author.id), words)
+            new_debt = self.game.submit_words(str(ctx.author.id), words, genre)
             journal_entry = {
                 "command": "log",
                 "words": words,

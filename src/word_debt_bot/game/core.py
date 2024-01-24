@@ -69,14 +69,16 @@ class WordDebtGame:
     def get_player(self, player_id: str) -> WordDebtPlayer:
         return self._state.users[player_id]
 
-    def submit_words(self, player_id: str, amount: int) -> int:
+    def submit_words(
+        self, player_id: str, amount: int, genre: str | None = None
+    ) -> int:
         if amount <= 0:
             raise ValueError(f"amount must be positive")
         state = self._state
         player = state.users[player_id]
         player.word_debt = max(player.word_debt - amount, 0)
         player.crane_payment_rollover += amount
-        crane_payment_ratio = 2 if not self._has_active_bonus_genre() else 4
+        crane_payment_ratio = 2 if not self._has_active_bonus_genre(genre) else 4
         player.cranes += crane_payment_ratio * (player.crane_payment_rollover // 1000)
         player.crane_payment_rollover %= 1000
         self._state = state
@@ -137,8 +139,12 @@ class WordDebtGame:
         )
         self._state = state
 
-    def _has_active_bonus_genre(self):
+    def _has_active_bonus_genre(self, genre: str | None):
         now = datetime.now()
         for item in self._state.modifiers:
-            if item["type"] == "bonus_genre" and item["expires"] > now.timestamp():
+            if (
+                item["type"] == "bonus_genre"
+                and item["expires"] > now.timestamp()
+                and item["genre"] == genre
+            ):
                 return True
