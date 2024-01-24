@@ -28,6 +28,7 @@ class WordDebtGame:
     def __init__(self, state_file_path: pathlib.Path):
         self.path = state_file_path
         self.init_state()
+        self._prune_expired_modifiers()
 
     def init_state(self):
         # If the file is nonexistent or empty, start a new game
@@ -35,6 +36,12 @@ class WordDebtGame:
             self._state = WordDebtState(version=1, users={}, modifiers=[])
         # Assert that state is readable
         self._state = self._state
+
+    def _prune_expired_modifiers(self):
+        state = self._state
+        now = datetime.now().timestamp()
+        state.modifiers = [mod for mod in state.modifiers if not mod["expires"] <= now]
+        self._state = state
 
     @property
     def _state(self):
