@@ -3,6 +3,7 @@ import math
 import os.path
 import pathlib
 from dataclasses import asdict
+from datetime import datetime, timedelta
 
 from word_debt_bot.game.state import WordDebtState
 
@@ -65,7 +66,8 @@ class WordDebtGame:
         player = state.users[player_id]
         player.word_debt = max(player.word_debt - amount, 0)
         player.crane_payment_rollover += amount
-        player.cranes += 2 * (player.crane_payment_rollover // 1000)
+        crane_payment_ratio = 2 if not self._has_active_bonus_genre() else 4
+        player.cranes += crane_payment_ratio * (player.crane_payment_rollover // 1000)
         player.crane_payment_rollover %= 1000
         self._state = state
         return player.word_debt
@@ -106,3 +108,17 @@ class WordDebtGame:
                 break
             pg += entry
         return pg
+
+    def add_bonus_genre(self, genre: str):
+        state = self._state
+        expiration = datetime.now() + timedelta(days=7)
+        state.modifiers.append(
+            {"type": "bonus_genre", "genre": genre, "expires": expiration.timestamp()}
+        )
+        self._state = state
+
+    def _has_active_bonus_genre(self):
+        now = datetime.now()
+        for item in self._state.modifiers:
+            if item["type"] == "bonus_genre" and item["expires"] > now.timestamp():
+                return True
