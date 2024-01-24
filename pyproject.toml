@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "word_debt_bot"
-version = "1.0.1"
+version = "1.0.2"
 description = "A Discord bot for running a little reading game."
 authors = ["Simeon Widdis <sawiddis@gmail.com>"]
 license = "MIT"
