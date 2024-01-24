@@ -1,6 +1,7 @@
 import json
 import pathlib
 from dataclasses import asdict
+from datetime import datetime
 
 import pytest
 
@@ -28,6 +29,19 @@ def test_game_migration_v0_to_v1(tmp_path: pathlib.Path):
     game_instance = game.WordDebtGame(tmp_path / "state.json")
     assert game_instance._state.version == 1
     assert asdict(game_instance._state)["users"] == state_v0
+
+
+def test_game_prunes_modifiers(game_state: game.WordDebtGame):
+    state = game_state._state
+    now = datetime.now().timestamp()
+    state.modifiers = [
+        {"type": "bonus_genre", "genre": "sci-fi", "expires": now - 1000.0}
+    ]
+    game_state._state = state
+
+    game_state._prune_expired_modifiers()
+
+    assert len(game_state._state.modifiers) == 0
 
 
 def test_game_registers_player(
