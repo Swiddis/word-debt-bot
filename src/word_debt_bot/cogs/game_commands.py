@@ -67,3 +67,26 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
             await ctx.send("No registered users, a leaderboard could not be made!")
             return
         await ctx.send(pg)
+
+    @commands.command(name="buy")
+    async def buy(self, ctx, item: str, *, args):
+        match item.lower().strip():
+            case "bonus genre":
+                if len(args) == 0:
+                    await ctx.send("Must specify a genre!")
+                    return
+                genre = " ".join(args.split()).lower()
+                user_id = str(ctx.author.id)
+                self.game.spend_cranes(user_id, 200)
+                self.game.add_bonus_genre(genre)
+                self.journal(
+                    {
+                        "command": "buy",
+                        "user": user_id,
+                        "item": "bonus genre",
+                        "genre": genre,
+                    }
+                )
+                await ctx.send(f"New bonus genre active: {genre}")
+            case _:
+                await ctx.send("Invalid store item")
