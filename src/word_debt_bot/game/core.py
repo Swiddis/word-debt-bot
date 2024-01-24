@@ -86,6 +86,16 @@ class WordDebtGame:
         state.users[player_id].word_debt += amount
         self._state = state
 
+    def spend_cranes(self, player_id: str, amount: int):
+        if amount <= 0:
+            raise ValueError("amount must be positive")
+        state = self._state
+        user = state.users[player_id]
+        if amount > user.cranes:
+            raise ValueError("insufficient cranes")
+        user.cranes -= amount
+        self._state = state
+
     def get_leaderboard_page(self, sort_by: str, req_pg: int):
         sort_by = sort_by.lower()
         if sort_by not in ["debt", "cranes"]:
