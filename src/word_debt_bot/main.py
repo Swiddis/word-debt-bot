@@ -22,6 +22,7 @@ def get_token(token_path):
 def make_bot():
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True
     return WordDebtBot(".", intents=intents)
 
 
