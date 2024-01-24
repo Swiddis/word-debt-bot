@@ -1,4 +1,5 @@
 import json
+import math
 import os.path
 import pathlib
 from dataclasses import asdict
@@ -55,3 +56,33 @@ class WordDebtGame:
         state = self._state
         state[player_id].word_debt += amount
         self._state = state
+
+    def get_leaderboard_page(self, sort_by: str, req_pg: int):
+        sort_by = sort_by.lower()
+        if sort_by not in ["debt", "cranes"]:
+            raise ValueError("ordering is done by 'debt' or 'cranes'")
+        if req_pg < 1:
+            raise ValueError("requested leaderboard page must be 1 or greater")
+        # Make a sort key and sort users
+        if sort_by == "debt":
+            key = lambda u: u.word_debt
+        elif sort_by == "cranes":
+            key = lambda u: u.cranes
+        users = sorted(self._state.values(), key=key, reverse=True)
+        users = list(enumerate(users, start=1))
+        # Produce leaderboard string to return
+        pg = ""
+        pg_strt = (req_pg - 1) * 10
+        if pg_strt > len(users):
+            return f"The leaderboard is not that long! Last page = {math.ceil(len(users)/10)}"
+        pg_end = pg_strt + 10
+        if pg_end > len(users):
+            pg_end = len(users)
+        for i, u in users[pg_strt:pg_end]:
+            entry = (
+                f"{i}. {u.display_name} - {u.word_debt:,} debt - {u.cranes:,} cranes\n"
+            )
+            if len(pg + entry) > 2000:
+                break
+            pg += entry
+        return pg
