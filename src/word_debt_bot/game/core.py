@@ -66,6 +66,9 @@ class WordDebtGame:
         state.users[player.user_id] = player
         self._state = state
 
+    def get_player(self, player_id: str) -> WordDebtPlayer:
+        return self._state.users[player_id]
+
     def submit_words(self, player_id: str, amount: int) -> int:
         if amount <= 0:
             raise ValueError(f"amount must be positive")
