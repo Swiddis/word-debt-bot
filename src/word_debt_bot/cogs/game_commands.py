@@ -53,6 +53,19 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
         except ValueError:
             await ctx.send("Already registered!")
 
+    @commands.command(name="info")
+    async def info(self, ctx):
+        if not self.game:
+            await ctx.send("Game not loaded. (Yell at Toast!)")
+            return
+        try:
+            player = self.game.get_player(str(ctx.author.id))
+            await ctx.send(
+                f"Info for {player.display_name}:\nDebt: {player.word_debt}\nCranes: {player.cranes}"
+            )
+        except KeyError:
+            await ctx.send("Not registered! `.register`")
+
     @commands.command(name="log")
     async def log(self, ctx, words: int, genre: typing.Optional[str] = None):
         if not self.game:
