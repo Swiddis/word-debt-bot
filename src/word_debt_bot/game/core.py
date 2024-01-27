@@ -66,8 +66,8 @@ class WordDebtGame:
         state.users[player.user_id] = player
         self._state = state
 
-    def get_player(self, player_id: str) -> WordDebtPlayer:
-        return self._state.users[player_id]
+    def get_player(self, player_id: str) -> WordDebtPlayer | None:
+        return self._state.users.get(player_id)
 
     def submit_words(
         self, player_id: str, amount: int, genre: str | None = None
