@@ -49,7 +49,7 @@ async def test_registration(
     await game_commands_cog.register(game_commands_cog, ctx)
 
     ctx.send.assert_called_with("Registered with 10,000 debt!")
-    assert game_commands_cog.game._state[player.user_id].word_debt == 10000
+    assert game_commands_cog.game._state.users[player.user_id].word_debt == 10000
 
 
 @pytest.mark.asyncio

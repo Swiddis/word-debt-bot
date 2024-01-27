@@ -1,10 +1,9 @@
 import importlib.metadata
 import json
 import pathlib
-import subprocess
+import typing
 from datetime import datetime
 
-import discord
 import discord.ext.commands as commands
 
 import word_debt_bot.client as client
@@ -49,10 +48,17 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
         await ctx.send("Registered with 10,000 debt!")
 
     @commands.command(name="log")
-    async def log(self, ctx, words: int):
+    async def log(self, ctx, words: int, genre: typing.Optional[str] = None):
         new_debt = self.game.submit_words(str(ctx.author.id), words)
-        self.journal({"command": "log", "words": words, "user": str(ctx.author.id)})
-        await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
+        journal_entry = {
+            "command": "log",
+            "words": words,
+            "user": str(ctx.author.id),
+        }
+        if genre:
+            journal_entry["genre"] = genre
+            self.journal(journal_entry)
+            await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
     @commands.command(name="leaderboard")
     async def leaderboard(self, ctx, sort_by: str = "debt", req_pg: int = 1):
