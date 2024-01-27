@@ -104,46 +104,49 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="buy")
     async def buy(self, ctx, item: str, *, args):
-        match item.lower().strip():
-            case "bonus genre":
-                if len(args) == 0:
-                    await ctx.send("Must specify a genre!")
-                    return
-                genre = " ".join(args.split()).lower()
-                user_id = str(ctx.author.id)
-                self.game.spend_cranes(user_id, 200)
-                self.game.add_bonus_genre(genre)
-                self.journal(
-                    {
-                        "command": "buy",
-                        "user": user_id,
-                        "item": "bonus genre",
-                        "genre": genre,
-                    }
-                )
-                await ctx.send(f"New bonus genre active: {genre}")
-            case "debt increase":
-                target_id = re.match(r"<@(\d+)>", args)
-                if not target_id:
-                    await ctx.send("Must specify a target player!")
-                    return
-                target_player = self.game.get_player(target_id.group(1))
-                if not target_player:
-                    await ctx.send("Target player is not registered!")
-                    return
-                user_id = str(ctx.author.id)
-                self.game.spend_cranes(user_id, 20)
-                self.game.add_debt(target_player.user_id, 10000)
-                self.journal(
-                    {
-                        "command": "buy",
-                        "user": user_id,
-                        "item": "debt increase",
-                        "target": target_player.user_id,
-                    }
-                )
-                await ctx.send(
-                    f"Increased {target_player.display_name}'s debt by 10,000! How mean..."
-                )
-            case _:
-                await ctx.send("Invalid store item")
+        try:
+            match item.lower().strip():
+                case "bonus genre":
+                    if len(args) == 0:
+                        await ctx.send("Must specify a genre!")
+                        return
+                    genre = " ".join(args.split()).lower()
+                    user_id = str(ctx.author.id)
+                    self.game.spend_cranes(user_id, 200)
+                    self.game.add_bonus_genre(genre)
+                    self.journal(
+                        {
+                            "command": "buy",
+                            "user": user_id,
+                            "item": "bonus genre",
+                            "genre": genre,
+                        }
+                    )
+                    await ctx.send(f"New bonus genre active: {genre}")
+                case "debt increase":
+                    target_id = re.match(r"<@(\d+)>", args)
+                    if not target_id:
+                        await ctx.send("Must specify a target player!")
+                        return
+                    target_player = self.game.get_player(target_id.group(1))
+                    if not target_player:
+                        await ctx.send("Target player is not registered!")
+                        return
+                    user_id = str(ctx.author.id)
+                    self.game.spend_cranes(user_id, 20)
+                    self.game.add_debt(target_player.user_id, 10000)
+                    self.journal(
+                        {
+                            "command": "buy",
+                            "user": user_id,
+                            "item": "debt increase",
+                            "target": target_player.user_id,
+                        }
+                    )
+                    await ctx.send(
+                        f"Increased {target_player.display_name}'s debt by 10,000! How mean..."
+                    )
+                case _:
+                    await ctx.send("Invalid store item")
+        except ValueError as err:
+            await ctx.send(f"Error: {err}")
