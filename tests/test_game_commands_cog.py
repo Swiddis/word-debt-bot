@@ -54,14 +54,19 @@ async def test_registration(
 
 @pytest.mark.asyncio
 async def test_registration_valueerror(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
 
-    await game_commands_cog.register(game_commands_cog, ctx)
-    await game_commands_cog.register(game_commands_cog, ctx)
+    await game_cmds_cog.register.invoke(ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.register.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Already registered!")
 
@@ -101,27 +106,35 @@ async def test_submit_words(
 
 @pytest.mark.asyncio
 async def test_submit_words_with_error(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_commands_cog.game.register_player(player)
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game.register_player(player)
 
-    await game_commands_cog.log(game_commands_cog, ctx, -1000)
+    with pytest.raises(ValueError):
+        await game_cmds_cog.log(ctx, -1000)
 
-    ctx.send.assert_called_with(String() & Regex("Error:.*"))
+    # TODO Simply assures that an ValueError has been raised
+    # Need to handle 'words' kwarg
 
 
 @pytest.mark.asyncio
 async def test_submit_words_with_no_register(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000)
+    with pytest.raises(KeyError):
+        await game_cmds_cog.log(ctx, 10)
 
-    ctx.send.assert_called_with(String() & Regex("Not registered!.*"))
+    # TODO Simply assures that an KeyError has been raised
+    # Need to handle 'words' kwarg
 
 
 @pytest.mark.asyncio
@@ -135,13 +148,11 @@ async def test_submit_words_no_game(
     game_cmds_cog.game = None
     cmd_err_cog.game = None
 
-    with pytest.raises(AttributeError) as err:
-        await game_cmds_cog.log(ctx, 1000)
+    with pytest.raises(AttributeError):
+        await game_cmds_cog.log(ctx, 10)
 
-    # await cmd_err_cog.on_command_error(ctx, err.value)
     # TODO Simply assures that an AttributeError has been raised
     # Need to handle 'words' kwarg
-    # ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio

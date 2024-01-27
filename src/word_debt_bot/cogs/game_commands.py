@@ -44,31 +44,20 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
     @commands.command(name="register")
     async def register(self, ctx):
         player = game.WordDebtPlayer(str(ctx.author.id), ctx.author.name, 10_000)
-        try:
-            self.game.register_player(player)
-            self.journal({"command": "register", "user": str(ctx.author.id)})
-            await ctx.send("Registered with 10,000 debt!")
-        except ValueError:
-            await ctx.send("Already registered!")
+        self.game.register_player(player)
+        self.journal({"command": "register", "user": str(ctx.author.id)})
+        await ctx.send("Registered with 10,000 debt!")
 
     @commands.command(name="log")
     async def log(self, ctx, words: int):
-        try:
-            new_debt = self.game.submit_words(str(ctx.author.id), words)
-            self.journal({"command": "log", "words": words, "user": str(ctx.author.id)})
-            await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
-        except KeyError as _err:
-            await ctx.send("Not registered! `.register`")
-        except ValueError as err:
-            await ctx.send(f"Error: {str(err)}")
+        new_debt = self.game.submit_words(str(ctx.author.id), words)
+        self.journal({"command": "log", "words": words, "user": str(ctx.author.id)})
+        await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
     @commands.command(name="leaderboard")
     async def leaderboard(self, ctx, sort_by: str = "debt", req_pg: int = 1):
-        try:
-            pg = self.game.get_leaderboard_page(sort_by, req_pg)
-            if pg == "":
-                await ctx.send("No registered users, a leaderboard could not be made!")
-                return
-            await ctx.send(pg)
-        except ValueError as err:
-            await ctx.send(f"Error: {str(err)}")
+        pg = self.game.get_leaderboard_page(sort_by, req_pg)
+        if pg == "":
+            await ctx.send("No registered users, a leaderboard could not be made!")
+            return
+        await ctx.send(pg)
