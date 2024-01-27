@@ -1,6 +1,7 @@
 import importlib.metadata
 import json
 import pathlib
+import re
 import typing
 from datetime import datetime
 
@@ -121,5 +122,28 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
                     }
                 )
                 await ctx.send(f"New bonus genre active: {genre}")
+            case "debt increase":
+                target_id = re.match(r"<@(\d+)>", args)
+                if not target_id:
+                    await ctx.send("Must specify a target player!")
+                    return
+                target_player = self.game.get_player(target_id.group(1))
+                if not target_player:
+                    await ctx.send("Target player is not registered!")
+                    return
+                user_id = str(ctx.author.id)
+                self.game.spend_cranes(user_id, 20)
+                self.game.add_debt(target_player.user_id, 10000)
+                self.journal(
+                    {
+                        "command": "buy",
+                        "user": user_id,
+                        "item": "debt increase",
+                        "target": target_player.user_id,
+                    }
+                )
+                await ctx.send(
+                    f"Increased {target_player.display_name}'s debt by 10,000! How mean..."
+                )
             case _:
                 await ctx.send("Invalid store item")
