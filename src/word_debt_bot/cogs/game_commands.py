@@ -56,7 +56,7 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
         try:
             player = self.game.get_player(str(ctx.author.id))
             await ctx.send(
-                f"Info for {player.display_name}:\nDebt: {player.word_debt}\nCranes: {player.cranes}"
+                f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
             )
         except KeyError:
             await ctx.send("Not registered! `.register`")

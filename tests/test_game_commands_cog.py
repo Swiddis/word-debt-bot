@@ -1,3 +1,5 @@
+import copy
+import re
 from unittest.mock import AsyncMock
 
 import pytest
@@ -203,3 +205,52 @@ async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
     await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
+
+
+@pytest.mark.asyncio
+async def test_buy_with_value_error(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    target_player = copy.copy(player)
+    target_player.user_id = "12345"
+    game_commands_cog.game.register_player(player)
+    game_commands_cog.game.register_player(target_player)
+
+    await game_commands_cog.buy(
+        game_commands_cog, ctx, "debt increase", args=f"<@{target_player.user_id}>"
+    )
+
+    ctx.send.assert_called_with("Error: insufficient cranes")
+
+
+@pytest.mark.asyncio
+async def test_buy_bonus_genre(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000)
+    await game_commands_cog.buy(
+        game_commands_cog, ctx, "bonus genre", args="historical fiction"
+    )
+
+    ctx.send.assert_called_with("New bonus genre active: historical fiction")
+
+
+@pytest.mark.asyncio
+async def test_info(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    player.word_debt = 250000
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000)
+    await game_commands_cog.info(game_commands_cog, ctx)
+
+    # Multiline flag is broken, TODO fix and use regular .*
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"))
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
