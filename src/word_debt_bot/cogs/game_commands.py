@@ -57,8 +57,8 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
         }
         if genre:
             journal_entry["genre"] = genre
-            self.journal(journal_entry)
-            await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
+        self.journal(journal_entry)
+        await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
     @commands.command(name="leaderboard")
     async def leaderboard(self, ctx, sort_by: str = "debt", req_pg: int = 1):
