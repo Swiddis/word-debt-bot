@@ -63,7 +63,7 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="log")
     async def log(self, ctx, words: int, genre: typing.Optional[str] = None):
-        new_debt = self.game.submit_words(str(ctx.author.id), words)
+        new_debt = self.game.submit_words(str(ctx.author.id), words, genre)
         journal_entry = {
             "command": "log",
             "words": words,
