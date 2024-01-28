@@ -114,11 +114,21 @@ async def test_submit_words_with_error(
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game.register_player(player)
 
-    with pytest.raises(ValueError):
-        await game_cmds_cog.log(ctx, -1000)
+    @bot.command()
+    async def log_test_m1k(ctx, words=-1000):
+        log = bot.get_command("log")
+        await log(ctx, words)
 
-    # TODO Simply assures that an ValueError has been raised
-    # Need to handle 'words' kwarg
+    game_cmds_cog.log_test_m1k = log_test_m1k
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_m1k.invoke(ctx)
+
+    ctx.command.name = "log"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
+
+    ctx.send.assert_called_with(String() & Regex("Error:.*"))
 
 
 @pytest.mark.asyncio
@@ -130,11 +140,21 @@ async def test_submit_words_with_no_register(
     game_cmds_cog = bot.get_cog("Core Gameplay Module")
     cmd_err_cog = bot.get_cog("Command Error Handler")
 
-    with pytest.raises(KeyError):
-        await game_cmds_cog.log(ctx, 10)
+    @bot.command()
+    async def log_test_10(ctx, words=10):
+        log = bot.get_command("log")
+        await log(ctx, words)
 
-    # TODO Simply assures that an KeyError has been raised
-    # Need to handle 'words' kwarg
+    game_cmds_cog.log_test_10 = log_test_10
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_10.invoke(ctx)
+
+    ctx.command.name = "log"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
+
+    ctx.send.assert_called_with(String() & Regex("Not registered!.*"))
 
 
 @pytest.mark.asyncio
@@ -148,11 +168,19 @@ async def test_submit_words_no_game(
     game_cmds_cog.game = None
     cmd_err_cog.game = None
 
-    with pytest.raises(AttributeError):
-        await game_cmds_cog.log(ctx, 10)
+    @bot.command()
+    async def log_test_10(ctx, words=10):
+        log = bot.get_command("log")
+        await log(ctx, words)
 
-    # TODO Simply assures that an AttributeError has been raised
-    # Need to handle 'words' kwarg
+    game_cmds_cog.log_test_10 = log_test_10
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_10.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
+
+    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio
