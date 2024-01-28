@@ -116,8 +116,7 @@ async def test_submit_words_with_error(
 
     @bot.command()
     async def log_test_m1k(ctx, words=-1000):
-        log = bot.get_command("log")
-        await log(ctx, words)
+        await game_cmds_cog.log(ctx, words)
 
     game_cmds_cog.log_test_m1k = log_test_m1k
 
@@ -142,8 +141,7 @@ async def test_submit_words_with_no_register(
 
     @bot.command()
     async def log_test_10(ctx, words=10):
-        log = bot.get_command("log")
-        await log(ctx, words)
+        await game_cmds_cog.log(ctx, words)
 
     game_cmds_cog.log_test_10 = log_test_10
 
@@ -170,8 +168,7 @@ async def test_submit_words_no_game(
 
     @bot.command()
     async def log_test_10(ctx, words=10):
-        log = bot.get_command("log")
-        await log(ctx, words)
+        await game_cmds_cog.log(ctx, words)
 
     game_cmds_cog.log_test_10 = log_test_10
 
