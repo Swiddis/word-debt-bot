@@ -58,6 +58,12 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
                 f"For more information type `.help {ctx.command}`"
             )
 
+        elif isinstance(err, commands.ExpectedClosingQuoteError):
+            await ctx.send(
+                f"A quote was missing for command {ctx.command}!\n"
+                f"For more information type `.help {ctx.command}`"
+            )
+
         elif isinstance(err.__cause__, AttributeError) and not self.game:
             await ctx.send("Game not loaded. (Yell at Toast!)")
 
@@ -80,6 +86,9 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
 
         elif isinstance(err.__cause__, ValueError) and ctx.command.name == "buy":
             await ctx.send(f"Error: {str(err.__cause__)}")
+
+        elif isinstance(err.__cause__, KeyError) and ctx.command.name == "buy":
+            await ctx.send("Not registered! `.register`")
 
         elif isinstance(err, commands.CommandInvokeError):
             await ctx.send(
