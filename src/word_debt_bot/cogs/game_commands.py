@@ -50,16 +50,10 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="info")
     async def info(self, ctx):
-        if not self.game:
-            await ctx.send("Game not loaded. (Yell at Toast!)")
-            return
-        try:
-            player = self.game.get_player(str(ctx.author.id))
-            await ctx.send(
-                f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
-            )
-        except KeyError:
-            await ctx.send("Not registered! `.register`")
+        player = self.game.get_player(str(ctx.author.id))
+        await ctx.send(
+            f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
+        )
 
     @commands.command(name="log")
     async def log(self, ctx, words: int, genre: typing.Optional[str] = None):
@@ -84,16 +78,13 @@ class GameCommands(commands.Cog, name="Core Gameplay Module"):
 
     @commands.command(name="buy")
     async def buy(self, ctx, item: str, *, args=""):
-        try:
-            match item.lower().strip():
-                case "bonus genre":
-                    await self.buy_bonus_genre(ctx, args)
-                case "debt increase":
-                    await self.buy_debt_increase(ctx, args)
-                case _:
-                    await ctx.send("Invalid store item")
-        except ValueError as err:
-            await ctx.send(f"Error: {err}")
+        match item.lower().strip():
+            case "bonus genre":
+                await self.buy_bonus_genre(ctx, args)
+            case "debt increase":
+                await self.buy_debt_increase(ctx, args)
+            case _:
+                await ctx.send("Invalid store item")
 
     async def buy_bonus_genre(self, ctx, args):
         if len(args) == 0:

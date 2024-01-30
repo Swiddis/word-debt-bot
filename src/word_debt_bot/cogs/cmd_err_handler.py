@@ -75,6 +75,12 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
         ):
             await ctx.send(f"Error: {str(err.__cause__)}")
 
+        elif isinstance(err.__cause__, AttributeError) and ctx.command.name == "info":
+            await ctx.send("Not registered! `.register`")
+
+        elif isinstance(err.__cause__, ValueError) and ctx.command.name == "buy":
+            await ctx.send(f"Error: {str(err.__cause__)}")
+
         elif isinstance(err, commands.CommandInvokeError):
             await ctx.send(
                 f"An error occured when invoking {ctx.command}!\n"

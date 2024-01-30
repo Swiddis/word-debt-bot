@@ -129,6 +129,8 @@ async def test_submit_words_with_error(
 
     await cmd_err_cog.on_command_error(ctx, err.value)
 
+    ctx.send.assert_called_with(String() & Regex("Error:.*"))
+
 
 @pytest.mark.asyncio
 async def test_submit_words_with_no_register(
@@ -151,6 +153,8 @@ async def test_submit_words_with_no_register(
     ctx.command.name = "log"
 
     await cmd_err_cog.on_command_error(ctx, err.value)
+
+    ctx.send.assert_called_with(String() & Regex("Not registered!.*"))
 
 
 @pytest.mark.asyncio
@@ -205,18 +209,31 @@ async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
 
 @pytest.mark.asyncio
 async def test_buy_with_value_error(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     target_player = copy.copy(player)
     target_player.user_id = "12345"
-    game_commands_cog.game.register_player(player)
-    game_commands_cog.game.register_player(target_player)
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game.register_player(player)
+    game_cmds_cog.game.register_player(target_player)
 
-    await game_commands_cog.buy(
-        game_commands_cog, ctx, "debt increase", args=f"<@{target_player.user_id}>"
-    )
+    @bot.command()
+    async def buy_test_err(ctx):
+        await game_cmds_cog.buy(
+            ctx, "debt increase", args=f"<@{target_player.user_id}>"
+        )
+
+    game_cmds_cog.buy_test_err = buy_test_err
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.buy_test_err.invoke(ctx)
+
+    ctx.command.name = "buy"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Error: insufficient cranes")
 
