@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from callee import Regex, String
+from discord.ext import commands
 
 from word_debt_bot import cogs
 from word_debt_bot import game as game_lib
@@ -55,28 +56,39 @@ async def test_registration(
 
 @pytest.mark.asyncio
 async def test_registration_valueerror(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
 
-    await game_commands_cog.register(game_commands_cog, ctx)
-    await game_commands_cog.register(game_commands_cog, ctx)
+    await game_cmds_cog.register.invoke(ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.register.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Already registered!")
 
 
 @pytest.mark.asyncio
 async def test_registration_no_game(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.register(game_commands_cog, ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.register.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
@@ -96,38 +108,76 @@ async def test_submit_words(
 
 @pytest.mark.asyncio
 async def test_submit_words_with_error(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_commands_cog.game.register_player(player)
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game.register_player(player)
 
-    await game_commands_cog.log(game_commands_cog, ctx, -1000)
+    @bot.command()
+    async def log_test_m1k(ctx, words=-1000):
+        await game_cmds_cog.log(ctx, words)
+
+    game_cmds_cog.log_test_m1k = log_test_m1k
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_m1k.invoke(ctx)
+
+    ctx.command.name = "log"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Error:.*"))
 
 
 @pytest.mark.asyncio
 async def test_submit_words_with_no_register(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000)
+    @bot.command()
+    async def log_test_10(ctx, words=10):
+        await game_cmds_cog.log(ctx, words)
+
+    game_cmds_cog.log_test_10 = log_test_10
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_10.invoke(ctx)
+
+    ctx.command.name = "log"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Not registered!.*"))
 
 
 @pytest.mark.asyncio
 async def test_submit_words_no_game(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000)
+    @bot.command()
+    async def log_test_10(ctx, words=10):
+        await game_cmds_cog.log(ctx, words)
+
+    game_cmds_cog.log_test_10 = log_test_10
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.log_test_10.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
@@ -142,29 +192,48 @@ async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameComma
 
 
 @pytest.mark.asyncio
-async def test_request_leaderboard_no_game(game_commands_cog: cogs.GameCommands):
+async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
     ctx = AsyncMock()
-    game_commands_cog.game = None
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game = None
+    cmd_err_cog.game = None
 
-    await game_commands_cog.leaderboard(game_commands_cog, ctx)
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.leaderboard.invoke(ctx)
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio
 async def test_buy_with_value_error(
-    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     target_player = copy.copy(player)
     target_player.user_id = "12345"
-    game_commands_cog.game.register_player(player)
-    game_commands_cog.game.register_player(target_player)
+    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    cmd_err_cog = bot.get_cog("Command Error Handler")
+    game_cmds_cog.game.register_player(player)
+    game_cmds_cog.game.register_player(target_player)
 
-    await game_commands_cog.buy(
-        game_commands_cog, ctx, "debt increase", args=f"<@{target_player.user_id}>"
-    )
+    @bot.command()
+    async def buy_test_err(ctx):
+        await game_cmds_cog.buy(
+            ctx, "debt increase", args=f"<@{target_player.user_id}>"
+        )
+
+    game_cmds_cog.buy_test_err = buy_test_err
+
+    with pytest.raises(commands.CommandInvokeError) as err:
+        await game_cmds_cog.buy_test_err.invoke(ctx)
+
+    ctx.command.name = "buy"
+
+    await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Error: insufficient cranes")
 
