@@ -10,7 +10,7 @@ A Discord bot for running a little reading game among language learners.
 
 ## Usage
 
-This project uses Poetry. Start by installing:
+This project uses [Poetry](https://python-poetry.org/). Start by installing:
 
 ```sh
 $ poetry install
