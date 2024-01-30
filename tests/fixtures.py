@@ -26,11 +26,23 @@ def game_commands_cog(game_state, tmp_path) -> cogs.GameCommands:
     return cogs.GameCommands(bot, game_state, tmp_path / "journal.ndjson")
 
 
+@pytest.fixture
+def cmd_err_handler_cog(game_state) -> cogs.CmdErrHandler:
+    intents = discord.Intents.default()
+    intents.message_content = True
+
+    # Dummy bot required as cog argument -- For bot access use bot fixture
+    bot = client.WordDebtBot(command_prefix=".", intents=intents)
+
+    return cogs.CmdErrHandler(bot, game_state)
+
+
 @pytest_asyncio.fixture
 async def bot(game_state, tmp_path) -> client.WordDebtBot:
     bot = main.make_bot()
     await bot._async_setup_hook()
     await bot.add_cog(cogs.GameCommands(bot, game_state, tmp_path / "journal.ndjson"))
+    await bot.add_cog(cogs.CmdErrHandler(bot, game_state))
     dpytest.configure(bot)
 
     yield bot

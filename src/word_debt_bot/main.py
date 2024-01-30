@@ -28,7 +28,10 @@ def make_bot():
 
 def add_cogs(bot: WordDebtBot, game: WordDebtGame):
     loop = asyncio.get_event_loop()
-    tasks = [loop.create_task(bot.add_cog(cogs.GameCommands(bot, game)))]
+    tasks = [
+        loop.create_task(bot.add_cog(cogs.GameCommands(bot, game))),
+        loop.create_task(bot.add_cog(cogs.CmdErrHandler(bot, game))),
+    ]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
 

@@ -1,5 +1,11 @@
 # Word Debt Bot
 
+[![Continuous Integration](https://github.com/Swiddis/word-debt-bot/actions/workflows/continuous_integration.yml/badge.svg)](https://github.com/Swiddis/word-debt-bot/actions/workflows/continuous_integration.yml)
+[![Coverage: codecov](https://codecov.io/gh/Swiddis/word-debt-bot/graph/badge.svg?token=E3AVRJUZ3V)](https://codecov.io/gh/Swiddis/word-debt-bot)
+[![License: MIT](https://img.shields.io/badge/license-MIT-purple)](https://github.com/Swiddis/word-debt-bot/blob/main/LICENSE)
+[![Versioning: semver](https://img.shields.io/badge/semver-1.0.2-blue)](https://semver.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A Discord bot for running a little reading game among language learners.
 
 ## Usage
