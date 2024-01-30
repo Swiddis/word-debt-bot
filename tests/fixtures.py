@@ -28,12 +28,7 @@ def game_commands_cog(game_state, tmp_path) -> cogs.GameCommands:
 
 @pytest.fixture
 def cmd_err_handler_cog(game_state) -> cogs.CmdErrHandler:
-    intents = discord.Intents.default()
-    intents.message_content = True
-
-    # Dummy bot required as cog argument -- For bot access use bot fixture
-    bot = client.WordDebtBot(command_prefix=".", intents=intents)
-
+    bot = main.make_bot()
     return cogs.CmdErrHandler(bot, game_state)
 
 
