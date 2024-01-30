@@ -129,9 +129,6 @@ async def test_submit_words_with_error(
 
     await cmd_err_cog.on_command_error(ctx, err.value)
 
-    # TODO Simply assures that an ValueError has been raised
-    # Need to handle 'words' kwarg
-
 
 @pytest.mark.asyncio
 async def test_submit_words_with_no_register(
@@ -154,9 +151,6 @@ async def test_submit_words_with_no_register(
     ctx.command.name = "log"
 
     await cmd_err_cog.on_command_error(ctx, err.value)
-
-    # TODO Simply assures that an KeyError has been raised
-    # Need to handle 'words' kwarg
 
 
 @pytest.mark.asyncio
