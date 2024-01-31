@@ -64,9 +64,6 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
                 f"For more information type `.help {ctx.command}`"
             )
 
-        elif isinstance(err.__cause__, AttributeError) and not self.game:
-            await ctx.send("Game not loaded. (Yell at Toast!)")
-
         elif isinstance(err.__cause__, ValueError) and ctx.command.name == "register":
             await ctx.send("Already registered!")
 

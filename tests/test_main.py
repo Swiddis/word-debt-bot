@@ -25,4 +25,4 @@ def test_token_read_missing_token(tmp_path: Path):
 def test_add_cogs(game_state: WordDebtGame):
     bot = main.make_bot()
     main.add_cogs(bot, game_state)
-    assert bot.get_cog("Core Gameplay Module") is not None
+    assert bot.get_cog("Core Gameplay") is not None
