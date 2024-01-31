@@ -11,7 +11,7 @@ import word_debt_bot.client as client
 import word_debt_bot.game as game
 
 
-class GameCommands(commands.Cog, name="Core Gameplay Module"):
+class GameCommands(commands.Cog, name="Core Gameplay"):
     def __init__(
         self,
         bot: client.WordDebtBot,

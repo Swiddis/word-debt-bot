@@ -61,7 +61,7 @@ async def test_registration_valueerror(
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
 
     await game_cmds_cog.register.invoke(ctx)
@@ -80,7 +80,7 @@ async def test_registration_no_game(
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     ctx.author.name = player.display_name
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game = None
     cmd_err_cog.game = None
@@ -112,7 +112,7 @@ async def test_submit_words_with_error(
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game.register_player(player)
 
@@ -138,7 +138,7 @@ async def test_submit_words_with_no_register(
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
 
     @bot.command()
@@ -163,7 +163,7 @@ async def test_submit_words_no_game(
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game = None
     cmd_err_cog.game = None
@@ -194,7 +194,7 @@ async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameComma
 @pytest.mark.asyncio
 async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
     ctx = AsyncMock()
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game = None
     cmd_err_cog.game = None
@@ -215,7 +215,7 @@ async def test_buy_with_value_error(
     ctx.author.id = player.user_id
     target_player = copy.copy(player)
     target_player.user_id = "12345"
-    game_cmds_cog = bot.get_cog("Core Gameplay Module")
+    game_cmds_cog = bot.get_cog("Core Gameplay")
     cmd_err_cog = bot.get_cog("Command Error Handler")
     game_cmds_cog.game.register_player(player)
     game_cmds_cog.game.register_player(target_player)
