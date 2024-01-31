@@ -1,0 +1,8 @@
+# This directory is used for storing game information.
+# The bot token should be in this directory in a file named `TOKEN`.
+# By default, the game state will be stored in `prod.json`,
+# with bot logs in `discord.log` and an update log in `journal.ndjson`.
+
+# gitignore: everything in this directory except this
+*
+!.gitignore
