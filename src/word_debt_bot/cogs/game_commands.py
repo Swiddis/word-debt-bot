@@ -33,12 +33,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         """
         Check if the bot is running.
         """
-        if self.game:
-            await ctx.send("Pong! All systems normal.")
-        else:
-            await ctx.send(
-                "I'm alive, but I'm not sure where Toast hid the game state..."
-            )
+        await ctx.send("Pong! All systems normal.")
 
     @commands.command(name="version")
     async def version(self, ctx):

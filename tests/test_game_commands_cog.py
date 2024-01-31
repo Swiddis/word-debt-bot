@@ -13,16 +13,6 @@ from .fixtures import *
 
 
 @pytest.mark.asyncio
-async def test_ping_sends_response_no_game(game_commands_cog: cogs.GameCommands):
-    game_commands_cog.game = None
-    ctx = AsyncMock()
-
-    await game_commands_cog.ping(game_commands_cog, ctx)
-
-    ctx.send.assert_called_with(String() & Regex("I'm alive.*"))
-
-
-@pytest.mark.asyncio
 async def test_ping_sends_response(game_commands_cog: cogs.GameCommands):
     ctx = AsyncMock()
 
@@ -71,26 +61,6 @@ async def test_registration_valueerror(
     await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Already registered!")
-
-
-@pytest.mark.asyncio
-async def test_registration_no_game(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    ctx.author.name = player.display_name
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-    game_cmds_cog.game = None
-    cmd_err_cog.game = None
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.register.invoke(ctx)
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio
@@ -158,53 +128,12 @@ async def test_submit_words_with_no_register(
 
 
 @pytest.mark.asyncio
-async def test_submit_words_no_game(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-    game_cmds_cog.game = None
-    cmd_err_cog.game = None
-
-    @bot.command()
-    async def log_test_10(ctx, words=10):
-        await game_cmds_cog.log(ctx, words, None)
-
-    game_cmds_cog.log_test_10 = log_test_10
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.log_test_10.invoke(ctx)
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
-
-
-@pytest.mark.asyncio
 async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameCommands):
     ctx = AsyncMock()
 
     await game_commands_cog.leaderboard(game_commands_cog, ctx, "debt", 1)
 
     ctx.send.assert_called_with(String() & Regex("No registered users.*"))
-
-
-@pytest.mark.asyncio
-async def test_request_leaderboard_no_game(bot: client.WordDebtBot):
-    ctx = AsyncMock()
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-    game_cmds_cog.game = None
-    cmd_err_cog.game = None
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.leaderboard.invoke(ctx)
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with(String() & Regex("Game not loaded.*"))
 
 
 @pytest.mark.asyncio
