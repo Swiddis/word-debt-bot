@@ -101,7 +101,7 @@ async def test_submit_words(
     ctx.author.id = player.user_id
     game_commands_cog.game.register_player(player)
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000)
+    await game_commands_cog.log(game_commands_cog, ctx, 1000, genre=None)
 
     ctx.send.assert_called_with(String() & Regex("Logged 1,000 words!.*"))
 
@@ -118,7 +118,7 @@ async def test_submit_words_with_error(
 
     @bot.command()
     async def log_test_m1k(ctx, words=-1000):
-        await game_cmds_cog.log(ctx, words)
+        await game_cmds_cog.log(ctx, words, genre=None)
 
     game_cmds_cog.log_test_m1k = log_test_m1k
 
@@ -143,7 +143,7 @@ async def test_submit_words_with_no_register(
 
     @bot.command()
     async def log_test_10(ctx, words=10):
-        await game_cmds_cog.log(ctx, words)
+        await game_cmds_cog.log(ctx, words, None)
 
     game_cmds_cog.log_test_10 = log_test_10
 
@@ -170,7 +170,7 @@ async def test_submit_words_no_game(
 
     @bot.command()
     async def log_test_10(ctx, words=10):
-        await game_cmds_cog.log(ctx, words)
+        await game_cmds_cog.log(ctx, words, None)
 
     game_cmds_cog.log_test_10 = log_test_10
 
@@ -186,7 +186,7 @@ async def test_submit_words_no_game(
 async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameCommands):
     ctx = AsyncMock()
 
-    await game_commands_cog.leaderboard(game_commands_cog, ctx)
+    await game_commands_cog.leaderboard(game_commands_cog, ctx, "debt", 1)
 
     ctx.send.assert_called_with(String() & Regex("No registered users.*"))
 
@@ -245,7 +245,7 @@ async def test_buy_bonus_genre(
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     game_commands_cog.game.register_player(player)
-    await game_commands_cog.log(game_commands_cog, ctx, 100000)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
     await game_commands_cog.buy(
         game_commands_cog, ctx, "bonus genre", args="historical fiction"
     )
@@ -261,7 +261,7 @@ async def test_info(
     ctx.author.id = player.user_id
     player.word_debt = 250000
     game_commands_cog.game.register_player(player)
-    await game_commands_cog.log(game_commands_cog, ctx, 100000)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
     await game_commands_cog.info(game_commands_cog, ctx)
 
     # Multiline flag is broken, TODO fix and use regular .*
