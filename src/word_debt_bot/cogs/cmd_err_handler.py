@@ -67,31 +67,15 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
                 )
 
     async def handle_invoke_error(self, cause, ctx):
-        if isinstance(cause, ValueError) and ctx.command.name == "register":
-            await ctx.send("Already registered!")
-
-        elif isinstance(cause, KeyError) and ctx.command.name == "log":
-            await ctx.send("Not registered! `.register`")
-
-        elif isinstance(cause, ValueError) and ctx.command.name == "log":
-            await ctx.send(f"Error: {str(cause)}")
-
-        elif isinstance(cause, ValueError) and ctx.command.name == "leaderboard":
-            await ctx.send(f"Error: {str(cause)}")
-
-        elif isinstance(cause, AttributeError) and ctx.command.name == "info":
-            await ctx.send("Not registered! `.register`")
-
-        elif isinstance(cause, ValueError) and ctx.command.name == "buy":
-            await ctx.send(f"Error: {str(cause)}")
-
-        elif isinstance(cause, KeyError) and ctx.command.name == "buy":
-            await ctx.send("Not registered! `.register`")
-
-        else:
-            await ctx.send(
-                f"An unhandled error occured when invoking {ctx.command}!\n"
-                f"Error: {str(cause)}\n"
-                f"Type: {type(cause)}\n"
-                f"For more information type `.help {ctx.command}`\n"
-            )
+        match cause:
+            case ValueError():
+                await ctx.send(f"Error: {str(cause)}")
+            case KeyError():
+                await ctx.send("Not registered! `.register`")
+            case _:
+                await ctx.send(
+                    f"An unhandled error occured when invoking {ctx.command}!\n"
+                    f"Error: {str(cause)}\n"
+                    f"Type: {type(cause)}\n"
+                    f"For more information type `.help {ctx.command}`\n"
+                )

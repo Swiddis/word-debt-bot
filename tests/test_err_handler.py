@@ -26,7 +26,7 @@ async def test_registration_valueerror(
 
     await cmd_err_cog.on_command_error(ctx, err.value)
 
-    ctx.send.assert_called_with("Already registered!")
+    ctx.send.assert_called_with("Error: already registered!")
 
 
 @pytest.mark.asyncio

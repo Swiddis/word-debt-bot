@@ -62,12 +62,15 @@ class WordDebtGame:
     def register_player(self, player: WordDebtPlayer):
         state = self._state
         if player.user_id in state.users:
-            raise ValueError(f"Player with id {player.user_id} already exists")
+            raise ValueError(f"already registered!")
         state.users[player.user_id] = player
         self._state = state
 
-    def get_player(self, player_id: str) -> WordDebtPlayer | None:
-        return self._state.users.get(player_id)
+    def get_player(self, player_id: str, optional=True) -> WordDebtPlayer | None:
+        if optional:  # Don't throw a KeyError if missing
+            return self._state.users.get(player_id)
+        else:
+            return self._state.users[player_id]
 
     def submit_words(
         self, player_id: str, amount: int, genre: str | None = None

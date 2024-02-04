@@ -62,7 +62,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         """
         Check your current cranes and debt.
         """
-        player = self.game.get_player(str(ctx.author.id))
+        player = self.game.get_player(str(ctx.author.id), False)
         await ctx.send(
             f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
         )
