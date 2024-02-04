@@ -27,20 +27,6 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
         match err:
             case commands.CommandNotFound():
                 return
-            case commands.DisabledCommand():
-                await ctx.send(f"Sorry, {ctx.command} is currently disabled.\n")
-            case commands.MissingPermissions():
-                await ctx.send(
-                    f"Sorry, you do not have the required permissions for {ctx.command}.\n"
-                )
-            case commands.MissingRole():
-                await ctx.send(
-                    f"Sorry, you do not have the required role for {ctx.command}.\n"
-                )
-            case commands.MissingAnyRole():
-                await ctx.send(
-                    f"Sorry, you do not have all the required roles for {ctx.command}.\n"
-                )
             case commands.BadArgument():
                 await ctx.send(
                     f"Invalid inputs were supplied for {ctx.command}!\n"
@@ -51,11 +37,6 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
                     f"Not all required inputs were given for {ctx.command}!\n"
                     f"For more information type `.help {ctx.command}`"
                 )
-            case commands.ExpectedClosingQuoteError():
-                await ctx.send(
-                    f"A quote was missing for command {ctx.command}!\n"
-                    f"For more information type `.help {ctx.command}`"
-                )
             case commands.CommandInvokeError():
                 await self.handle_invoke_error(err.__cause__, ctx)
             case _:
@@ -63,7 +44,7 @@ class CmdErrHandler(commands.Cog, name="Command Error Handler"):
                     f"An unhandled error occured when invoking {ctx.command}!\n"
                     f"Error: {str(err)}\n"
                     f"Type: {type(err)}\n"
-                    f"For more information type `.help {ctx.command}`\n"
+                    f"For more information type `.help {ctx.command}` (and report this error to Toast!)\n"
                 )
 
     async def handle_invoke_error(self, cause, ctx):

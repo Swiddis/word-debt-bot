@@ -109,3 +109,37 @@ async def test_buy_with_value_error(
     await cmd_err_cog.on_command_error(ctx, err.value)
 
     ctx.send.assert_called_with("Error: insufficient cranes")
+
+
+@pytest.mark.asyncio
+async def test_missing_args(bot):
+    await dpytest.message(".register")
+    await dpytest.empty_queue()
+
+    with pytest.raises(commands.MissingRequiredArgument):
+        await dpytest.message(".log")
+
+    assert (
+        dpytest.verify()
+        .message()
+        .contains()
+        .content("Not all required inputs were given")
+    )
+
+
+@pytest.mark.asyncio
+async def test_invalid_args(bot):
+    await dpytest.message(".register")
+    await dpytest.empty_queue()
+
+    with pytest.raises(commands.BadArgument):
+        await dpytest.message(".log fiction")
+
+    assert dpytest.verify().message().contains().content("Invalid inputs were supplied")
+
+
+@pytest.mark.asyncio
+async def test_invalid_command(bot):
+    with pytest.raises(commands.CommandNotFound):
+        await dpytest.message(".nonexistent")
+    assert dpytest.verify().message().nothing()
