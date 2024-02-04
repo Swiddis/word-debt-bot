@@ -1,6 +1,7 @@
 import random
 import string
 
+import discord
 import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
@@ -34,7 +35,10 @@ def cmd_err_handler_cog(game_state) -> cogs.CmdErrHandler:
 
 @pytest_asyncio.fixture
 async def bot(game_state, tmp_path) -> client.WordDebtBot:
-    bot = main.make_bot()
+    intents = discord.Intents.default()
+    intents.message_content = True
+    intents.members = True
+    bot = main.make_bot(intents)
     await bot._async_setup_hook()
     await bot.add_cog(cogs.GameCommands(bot, game_state, tmp_path / "journal.ndjson"))
     await bot.add_cog(cogs.CmdErrHandler(bot, game_state))

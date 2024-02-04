@@ -19,10 +19,10 @@ def get_token(token_path):
         return token_file.read()
 
 
-def make_bot():
-    intents = discord.Intents.default()
-    intents.message_content = True
-    intents.members = True
+def make_bot(intents=None):
+    if intents is None:
+        intents = discord.Intents.default()
+        intents.message_content = True
     return WordDebtBot(".", intents=intents)
 
 
