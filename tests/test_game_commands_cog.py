@@ -82,13 +82,22 @@ async def test_buy_bonus_genre(
 async def test_info(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
+    # Check info as self (no name given)
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     player.word_debt = 250000
     game_commands_cog.game.register_player(player)
     await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
-    await game_commands_cog.info(game_commands_cog, ctx)
+    await game_commands_cog.info(game_commands_cog, ctx, None)
 
     # Multiline flag is broken, TODO fix and use regular .*
     ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"))
     ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
+
+    # Check info as someone else
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
+    ctx.author.id = "some.other.player"
+    await game_commands_cog.info(game_commands_cog, ctx, player.display_name)
+
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 50,000(\n.*)*"))
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 400(\n.*)*"))

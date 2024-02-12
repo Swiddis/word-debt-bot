@@ -72,6 +72,16 @@ class WordDebtGame:
         else:
             return self._state.users[player_id]
 
+    def get_player_by_name(
+        self, display_name: str, optional=True
+    ) -> WordDebtPlayer | None:
+        for user in self._state.users.values():
+            if user.display_name == display_name:
+                return user
+        if optional:
+            return None
+        raise KeyError(f"No user with display name {display_name}")
+
     def submit_words(
         self, player_id: str, amount: int, genre: str | None = None
     ) -> int:
