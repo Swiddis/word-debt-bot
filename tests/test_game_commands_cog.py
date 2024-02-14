@@ -120,5 +120,5 @@ async def test_shop(game_commands_cog: cogs.GameCommands):
     game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
     await game_commands_cog.shop(game_commands_cog, ctx)
     ctx.send.assert_called_with(
-        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 100 cranes.\n'
+        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 20 cranes.\n'
     )

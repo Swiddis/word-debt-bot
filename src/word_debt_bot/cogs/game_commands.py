@@ -39,7 +39,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                         "debt_increase": {
                             "display_name": "debt increase",
                             "description": "Increase another player's debt by 10000.",
-                            "price": 100,
+                            "price": 20,
                         },
                     },
                     file_handle,
