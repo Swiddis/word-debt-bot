@@ -1,6 +1,7 @@
 import importlib.metadata
 import inspect
 import json
+import os
 import pathlib
 import re
 import typing
@@ -8,6 +9,7 @@ from datetime import datetime
 
 import discord
 import discord.ext.commands as commands
+import yaml
 
 import word_debt_bot.client as client
 import word_debt_bot.game as game
@@ -19,10 +21,31 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         bot: client.WordDebtBot,
         game: game.WordDebtGame,
         journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson"),
+        shop_path: pathlib.Path = pathlib.Path("data/shop.yaml"),
     ):
         self.bot = bot
         self.game = game
         self.journal_path = journal_path
+        self.shop_path = shop_path
+
+        if not os.path.exists(self.shop_path):
+            with open(self.shop_path, "w") as file_handle:
+                yaml.dump(
+                    {
+                        "bonus_genre": {
+                            "display_name": "bonus genre",
+                            "description": "For the next week, words logged with this genre are worth twice as many cranes.",
+                            "price": 200,
+                        },
+                        "debt_increase": {
+                            "display_name": "debt increase",
+                            "description": "Increase another player's debt by 10000.",
+                            "price": 20,
+                        },
+                    },
+                    file_handle,
+                    Dumper=yaml.Dumper,
+                )
 
     def journal(self, entry: dict) -> None:
         entry["time"] = datetime.now().timestamp()
@@ -133,6 +156,23 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             return
         await ctx.send(pg)
 
+    @commands.command(name="shop")
+    async def shop(
+        self,
+        ctx,
+    ):
+        """
+        List items available in the shop. Use the `buy` command to buy items.
+        """
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+
+        message = ""
+        for _, item in shop_items.items():
+            message += f"- \"{item['display_name']}\": {item['description']} Costs {item['price']:,} cranes.\n"
+
+        await ctx.send(f"{message}")
+
     @commands.command(name="buy")
     async def buy(
         self,
@@ -147,11 +187,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         ),
     ):
         """
-        Purchase items from the store.
-
-        The following items are currently supported:
-        - "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.
-        - "debt increase": Increase another player's debt by 10000. Costs 20 cranes.
+        Purchase items from the shop. Use the `shop` command to view the items for sale.
         """
         if args is None:
             args = ""
@@ -161,7 +197,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             case "debt increase":
                 await self.buy_debt_increase(ctx, args)
             case _:
-                await ctx.send("Invalid store item")
+                await ctx.send("Invalid shop item")
 
     async def buy_bonus_genre(self, ctx, args):
         if len(args) == 0:
@@ -169,7 +205,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             return
         genre = " ".join(args.split()).lower()
         user_id = str(ctx.author.id)
-        self.game.spend_cranes(user_id, 200)
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+        price = shop_items["bonus_genre"]["price"]
+        self.game.spend_cranes(user_id, price)
         self.game.add_bonus_genre(genre)
         self.journal(
             {
@@ -177,6 +216,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 "user": user_id,
                 "item": "bonus genre",
                 "genre": genre,
+                "price": price,
             }
         )
         await ctx.send(f"New bonus genre active: {genre}")
@@ -191,7 +231,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             await ctx.send("Target player is not registered!")
             return
         user_id = str(ctx.author.id)
-        self.game.spend_cranes(user_id, 20)
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+        price = shop_items["bonus_genre"]["price"]
+        self.game.spend_cranes(user_id, price)
         self.game.add_debt(target_player.user_id, 10000)
         self.journal(
             {
@@ -199,6 +242,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 "user": user_id,
                 "item": "debt increase",
                 "target": target_player.user_id,
+                "price": price,
             }
         )
         await ctx.send(

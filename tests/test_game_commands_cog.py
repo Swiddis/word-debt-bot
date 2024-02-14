@@ -1,3 +1,4 @@
+import pathlib
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -64,18 +65,37 @@ async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameComma
 
 
 @pytest.mark.asyncio
-async def test_buy_bonus_genre(
+async def test_buy_bonus_genre_sends_buy_message(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     game_commands_cog.game.register_player(player)
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
     await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
     await game_commands_cog.buy(
         game_commands_cog, ctx, "bonus genre", args="historical fiction"
     )
 
     ctx.send.assert_called_with("New bonus genre active: historical fiction")
+
+
+@pytest.mark.asyncio
+async def test_buy_bonus_genre_subtracts_correct_price(
+    game_commands_cog: cogs.GameCommands,
+    player: game_lib.WordDebtPlayer,
+    game_state: game_lib.WordDebtGame,
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
+    await game_commands_cog.log(game_commands_cog, ctx, 300000, None)
+    await game_commands_cog.buy(
+        game_commands_cog, ctx, "bonus genre", args="historical fiction"
+    )
+
+    assert game_state._state.users[player.user_id].cranes == 400
 
 
 @pytest.mark.asyncio
@@ -95,6 +115,15 @@ async def test_info_no_player_specified(
 
 
 @pytest.mark.asyncio
+async def test_shop(game_commands_cog: cogs.GameCommands):
+    ctx = AsyncMock()
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
+    await game_commands_cog.shop(game_commands_cog, ctx)
+    ctx.send.assert_called_with(
+        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 20 cranes.\n'
+    )
+
+
 async def test_info_as_other_player(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
