@@ -7,6 +7,7 @@ import re
 import typing
 from datetime import datetime
 
+import discord
 import discord.ext.commands as commands
 import yaml
 
@@ -81,11 +82,29 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         await ctx.send("Registered with 10,000 debt!")
 
     @commands.command(name="info")
-    async def info(self, ctx):
+    async def info(
+        self,
+        ctx,
+        user: typing.Optional[discord.User] = commands.parameter(
+            default=None,
+            displayed_default=inspect.Parameter.empty,
+            description="The player to get info for.",
+        ),
+    ):
         """
-        Check your current cranes and debt.
+        Check someone's current cranes and debt. Shows your own info if no name is given.
         """
-        player = self.game.get_player(str(ctx.author.id), False)
+        if user:
+            # player = self.game.get_player_by_name(name, optional=True)
+            player = self.game.get_player(str(user.id), optional=True)
+        else:
+            player = self.game.get_player(str(ctx.author.id), optional=True)
+
+        if not player:
+            name = user.name if user else ctx.author.name
+            await ctx.send(f"Player '{name}' not found! Are they registered?")
+            return
+
         await ctx.send(
             f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
         )
