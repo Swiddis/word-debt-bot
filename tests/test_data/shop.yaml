@@ -1,0 +1,8 @@
+bonus_genre:
+  display_name: "bonus genre"
+  price: 200
+  description: "For the next week, words logged with this genre are worth twice as many cranes."
+debt_increase:
+  display_name: "debt increase"
+  price: 100
+  description: "Increase another player's debt by 10000."
