@@ -6,6 +6,7 @@ import re
 import typing
 from datetime import datetime
 
+import discord
 import discord.ext.commands as commands
 
 import word_debt_bot.client as client
@@ -61,7 +62,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
     async def info(
         self,
         ctx,
-        name: typing.Optional[str] = commands.parameter(
+        user: typing.Optional[discord.User] = commands.parameter(
             default=None,
             displayed_default=inspect.Parameter.empty,
             description="The player to get info for.",
@@ -70,13 +71,14 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         """
         Check someone's current cranes and debt. Shows your own info if no name is given.
         """
-        if name:
-            player = self.game.get_player_by_name(name, optional=True)
+        if user:
+            # player = self.game.get_player_by_name(name, optional=True)
+            player = self.game.get_player(str(user.id), optional=True)
         else:
             player = self.game.get_player(str(ctx.author.id), optional=True)
 
         if not player:
-            name = name if name else ctx.author.name
+            name = user.name if user else ctx.author.name
             await ctx.send(f"Player '{name}' not found! Are they registered?")
             return
 

@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from callee import Regex, String
@@ -79,10 +79,9 @@ async def test_buy_bonus_genre(
 
 
 @pytest.mark.asyncio
-async def test_info(
+async def test_info_no_player_specified(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
-    # Check info as self (no name given)
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     player.word_debt = 250000
@@ -94,10 +93,21 @@ async def test_info(
     ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"))
     ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
 
-    # Check info as someone else
+
+@pytest.mark.asyncio
+async def test_info_as_other_player(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    discord_user = Mock()
+    discord_user.id = player.user_id
+    player.word_debt = 200000
+    game_commands_cog.game.register_player(player)
     await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
     ctx.author.id = "some.other.player"
-    await game_commands_cog.info(game_commands_cog, ctx, player.display_name)
+    await game_commands_cog.info(game_commands_cog, ctx, discord_user)
 
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 50,000(\n.*)*"))
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 400(\n.*)*"))
+    # Multiline flag is broken, TODO fix and use regular .*
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 100,000(\n.*)*"))
+    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
