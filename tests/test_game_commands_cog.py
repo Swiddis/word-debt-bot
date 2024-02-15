@@ -1,5 +1,5 @@
 import pathlib
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
 from callee import Regex, String
@@ -99,6 +99,16 @@ async def test_buy_bonus_genre_subtracts_correct_price(
 
 
 @pytest.mark.asyncio
+async def test_shop(game_commands_cog: cogs.GameCommands):
+    ctx = AsyncMock()
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
+    await game_commands_cog.shop(game_commands_cog, ctx)
+    ctx.send.assert_called_with(
+        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 20 cranes.\n'
+    )
+
+
+@pytest.mark.asyncio
 async def test_info_no_player_specified(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
@@ -110,21 +120,16 @@ async def test_info_no_player_specified(
     await game_commands_cog.info(game_commands_cog, ctx, None)
 
     # Multiline flag is broken, TODO fix and use regular .*
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"))
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
-
-
-@pytest.mark.asyncio
-async def test_shop(game_commands_cog: cogs.GameCommands):
-    ctx = AsyncMock()
-    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
-    await game_commands_cog.shop(game_commands_cog, ctx)
     ctx.send.assert_called_with(
-        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 20 cranes.\n'
+        String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
     )
 
 
-async def test_info_as_other_player(
+@pytest.mark.asyncio
+async def test_info_by_user_mention(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
@@ -138,5 +143,91 @@ async def test_info_as_other_player(
     await game_commands_cog.info(game_commands_cog, ctx, discord_user)
 
     # Multiline flag is broken, TODO fix and use regular .*
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 100,000(\n.*)*"))
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Debt: 100,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
+    )
+
+
+@pytest.mark.asyncio
+async def test_info_by_display_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    player.display_name = "test name"
+    player.word_debt = 500000
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
+    ctx.author.id = "some.other.player"
+    await game_commands_cog.info(game_commands_cog, ctx, "test name")
+
+    # Multiline flag is broken, TODO fix and use regular .*
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)Display Name: test name(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Debt: 400,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
+    )
+
+
+@pytest.mark.asyncio
+async def test_set_display_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "new name")
+
+    assert (
+        game_commands_cog.game._state.users[player.user_id].display_name == "new name"
+    )
+    # assert game_commands_cog.game._state.users[player.user_id].display_name == "new name"
+    ctx.send.assert_called_with("🌞 Settings updated! 🌈")
+
+
+@pytest.mark.asyncio
+async def test_set_rejects_bad_key(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "badkey", "new name")
+
+    ctx.send.assert_called_with("💥 Invalid setting! 😠")
+
+
+@pytest.mark.asyncio
+async def test_set_too_long_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    name = player.display_name
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "a" * 100)
+
+    assert game_commands_cog.game._state.users[player.user_id].display_name == name
+    ctx.send.assert_called_with("🙅 Value too long! 😔")
+
+
+@pytest.mark.asyncio
+async def test_set_rejects_bad_characters_in_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    name = player.display_name
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "@everyone")
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "<3")
+
+    assert game_commands_cog.game._state.users[player.user_id].display_name == name
+    ctx.send.assert_called_with("💔 Invalid value! 😭")

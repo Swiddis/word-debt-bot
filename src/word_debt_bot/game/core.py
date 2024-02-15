@@ -72,6 +72,16 @@ class WordDebtGame:
         else:
             return self._state.users[player_id]
 
+    def get_player_by_display_name(
+        self, display_name: str, optional=True
+    ) -> WordDebtPlayer | None:
+        for player in self._state.users.values():
+            if player.display_name == display_name:
+                return player
+        if not optional:
+            raise ValueError(f"no player with display name {display_name}")
+        return None
+
     def submit_words(
         self, player_id: str, amount: int, genre: str | None = None
     ) -> int:
@@ -86,6 +96,16 @@ class WordDebtGame:
         player.crane_payment_rollover %= 1000
         self._state = state
         return player.word_debt
+
+    def set_player_languages(self, player_id: str, languages: str):
+        state = self._state
+        state.users[player_id].languages = languages
+        self._state = state
+
+    def set_player_display_name(self, player_id: str, display_name: str):
+        state = self._state
+        state.users[player_id].display_name = display_name
+        self._state = state
 
     def add_debt(self, player_id: str, amount: int):
         if amount <= 0:

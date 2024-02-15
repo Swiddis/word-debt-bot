@@ -85,7 +85,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
     async def info(
         self,
         ctx,
-        user: typing.Optional[discord.User] = commands.parameter(
+        user: typing.Optional[discord.User | str] = commands.parameter(
             default=None,
             displayed_default=inspect.Parameter.empty,
             description="The player to get info for.",
@@ -94,20 +94,74 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         """
         Check someone's current cranes and debt. Shows your own info if no name is given.
         """
-        if user:
-            # player = self.game.get_player_by_name(name, optional=True)
+        if user and isinstance(user, str):
+            name = user
+            player = self.game.get_player_by_display_name(user, optional=True)
+        elif user:
+            name = user.name
             player = self.game.get_player(str(user.id), optional=True)
         else:
+            name = ctx.author.name
             player = self.game.get_player(str(ctx.author.id), optional=True)
 
         if not player:
-            name = user.name if user else ctx.author.name
             await ctx.send(f"Player '{name}' not found! Are they registered?")
             return
 
         await ctx.send(
-            f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
+            f"Info for <@{player.user_id}> \n"
+            f"Display Name: {player.display_name}\n"
+            f"Languages: {player.languages}\n"
+            f"Debt: {player.word_debt:,}\n"
+            f"Cranes: {player.cranes:,}\n",
+            allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @commands.command(name="set")
+    async def set_(
+        self,
+        ctx,
+        key: str = commands.parameter(description="The thing you want to set."),
+        value: str = commands.parameter(description="What you want to set it to."),
+    ):
+        """
+        Configure user settings. Available settings: 'name', 'languages'
+        """
+        if any([character in value for character in ["<", ">", "@"]]):
+            await ctx.send("💔 Invalid value! 😭")
+            return
+
+        if key.lower() == "name":
+            if len(value) > 32:
+                await ctx.send("🙅 Value too long! 😔")
+                return
+            self.game.set_player_display_name(str(ctx.author.id), value)
+            self.journal(
+                {
+                    "command": "set",
+                    "user": str(ctx.author.id),
+                    "key": key,
+                    "value": value,
+                }
+            )
+        elif key.lower() == "languages":
+            if len(value) > 16:
+                await ctx.send("🙅 Value too long! 😔")
+                return
+            self.game.set_player_languages(str(ctx.author.id), value)
+            self.journal(
+                {
+                    "command": "set",
+                    "user": str(ctx.author.id),
+                    "key": key,
+                    "value": value,
+                }
+            )
+        else:
+            await ctx.send("💥 Invalid setting! 😠")
+            return
+
+        await ctx.send(f"🌞 Settings updated! 🌈")
 
     @commands.command(name="log")
     async def log(
