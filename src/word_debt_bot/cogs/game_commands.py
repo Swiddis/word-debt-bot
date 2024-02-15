@@ -145,7 +145,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 }
             )
         elif key.lower() == "languages":
-            if len(value) > 16:
+            if len(value) > 256:
                 await ctx.send("🙅 Value too long! 😔")
                 return
             self.game.set_player_languages(str(ctx.author.id), value)
