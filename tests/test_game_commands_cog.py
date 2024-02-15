@@ -177,6 +177,17 @@ async def test_info_by_display_name(
 
 
 @pytest.mark.asyncio
+async def test_info_name_not_found(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    await game_commands_cog.info(game_commands_cog, ctx, "🤪")
+
+    ctx.send.assert_called_with("Player '🤪' not found! Are they registered?")
+
+
+@pytest.mark.asyncio
 async def test_set_display_name(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
@@ -188,7 +199,6 @@ async def test_set_display_name(
     assert (
         game_commands_cog.game._state.users[player.user_id].display_name == "new name"
     )
-    # assert game_commands_cog.game._state.users[player.user_id].display_name == "new name"
     ctx.send.assert_called_with("🌞 Settings updated! 🌈")
 
 
@@ -215,6 +225,34 @@ async def test_set_too_long_name(
     await game_commands_cog.set_(game_commands_cog, ctx, "name", "a" * 100)
 
     assert game_commands_cog.game._state.users[player.user_id].display_name == name
+    ctx.send.assert_called_with("🙅 Value too long! 😔")
+
+
+@pytest.mark.asyncio
+async def test_set_languages(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "languages", "🇰🇿, KZ, Kazakh")
+
+    ctx.send.assert_called_with("🌞 Settings updated! 🌈")
+    assert (
+        game_commands_cog.game._state.users[player.user_id].languages
+        == "🇰🇿, KZ, Kazakh"
+    )
+
+
+@pytest.mark.asyncio
+async def test_set_too_long_languages(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "languages", "a" * 257)
+
     ctx.send.assert_called_with("🙅 Value too long! 😔")
 
 
