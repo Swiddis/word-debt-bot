@@ -28,7 +28,9 @@ def test_game_migration_v0_to_v1(tmp_path: pathlib.Path):
         json.dump(state_v0, statefile)
     game_instance = game.WordDebtGame(tmp_path / "state.json")
     assert game_instance._state.version == 1
-    assert asdict(game_instance._state)["users"] == state_v0
+    migrated_state_dict = asdict(game_instance._state)["users"]
+    migrated_state_dict["197"].pop("languages")
+    assert migrated_state_dict == state_v0
 
 
 def test_game_prunes_modifiers(game_state: game.WordDebtGame):
