@@ -1,12 +1,15 @@
 import importlib.metadata
 import inspect
 import json
+import os
 import pathlib
 import re
 import typing
 from datetime import datetime
 
+import discord
 import discord.ext.commands as commands
+import yaml
 
 import word_debt_bot.client as client
 import word_debt_bot.game as game
@@ -18,10 +21,31 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         bot: client.WordDebtBot,
         game: game.WordDebtGame,
         journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson"),
+        shop_path: pathlib.Path = pathlib.Path("data/shop.yaml"),
     ):
         self.bot = bot
         self.game = game
         self.journal_path = journal_path
+        self.shop_path = shop_path
+
+        if not os.path.exists(self.shop_path):
+            with open(self.shop_path, "w") as file_handle:
+                yaml.dump(
+                    {
+                        "bonus_genre": {
+                            "display_name": "bonus genre",
+                            "description": "For the next week, words logged with this genre are worth twice as many cranes.",
+                            "price": 200,
+                        },
+                        "debt_increase": {
+                            "display_name": "debt increase",
+                            "description": "Increase another player's debt by 10000.",
+                            "price": 20,
+                        },
+                    },
+                    file_handle,
+                    Dumper=yaml.Dumper,
+                )
 
     def journal(self, entry: dict) -> None:
         entry["time"] = datetime.now().timestamp()
@@ -58,14 +82,86 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         await ctx.send("Registered with 10,000 debt!")
 
     @commands.command(name="info")
-    async def info(self, ctx):
+    async def info(
+        self,
+        ctx,
+        user: typing.Optional[discord.User | str] = commands.parameter(
+            default=None,
+            displayed_default=inspect.Parameter.empty,
+            description="The player to get info for.",
+        ),
+    ):
         """
-        Check your current cranes and debt.
+        Check someone's current cranes and debt. Shows your own info if no name is given.
         """
-        player = self.game.get_player(str(ctx.author.id))
+        if user and isinstance(user, str):
+            name = user
+            player = self.game.get_player_by_display_name(user, optional=True)
+        elif user:
+            name = user.name
+            player = self.game.get_player(str(user.id), optional=True)
+        else:
+            name = ctx.author.name
+            player = self.game.get_player(str(ctx.author.id), optional=True)
+
+        if not player:
+            await ctx.send(f"Player '{name}' not found! Are they registered?")
+            return
+
         await ctx.send(
-            f"Info for {player.display_name}:\nDebt: {player.word_debt:,}\nCranes: {player.cranes:,}"
+            f"Info for <@{player.user_id}> \n"
+            f"Display Name: {player.display_name}\n"
+            f"Languages: {player.languages}\n"
+            f"Debt: {player.word_debt:,}\n"
+            f"Cranes: {player.cranes:,}\n",
+            allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @commands.command(name="set")
+    async def set_(
+        self,
+        ctx,
+        key: str = commands.parameter(description="The thing you want to set."),
+        value: str = commands.parameter(description="What you want to set it to."),
+    ):
+        """
+        Configure user settings. Available settings: 'name', 'languages'
+        """
+        if any([character in value for character in ["<", ">", "@"]]):
+            await ctx.send("💔 Invalid value! 😭")
+            return
+
+        if key.lower() == "name":
+            if len(value) > 32:
+                await ctx.send("🙅 Value too long! 😔")
+                return
+            self.game.set_player_display_name(str(ctx.author.id), value)
+            self.journal(
+                {
+                    "command": "set",
+                    "user": str(ctx.author.id),
+                    "key": key,
+                    "value": value,
+                }
+            )
+        elif key.lower() == "languages":
+            if len(value) > 256:
+                await ctx.send("🙅 Value too long! 😔")
+                return
+            self.game.set_player_languages(str(ctx.author.id), value)
+            self.journal(
+                {
+                    "command": "set",
+                    "user": str(ctx.author.id),
+                    "key": key,
+                    "value": value,
+                }
+            )
+        else:
+            await ctx.send("💥 Invalid setting! 😠")
+            return
+
+        await ctx.send(f"🌞 Settings updated! 🌈")
 
     @commands.command(name="log")
     async def log(
@@ -114,6 +210,23 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             return
         await ctx.send(pg)
 
+    @commands.command(name="shop")
+    async def shop(
+        self,
+        ctx,
+    ):
+        """
+        List items available in the shop. Use the `buy` command to buy items.
+        """
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+
+        message = ""
+        for _, item in shop_items.items():
+            message += f"- \"{item['display_name']}\": {item['description']} Costs {item['price']:,} cranes.\n"
+
+        await ctx.send(f"{message}")
+
     @commands.command(name="buy")
     async def buy(
         self,
@@ -128,11 +241,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         ),
     ):
         """
-        Purchase items from the store.
-
-        The following items are currently supported:
-        - "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.
-        - "debt increase": Increase another player's debt by 10000. Costs 20 cranes.
+        Purchase items from the shop. Use the `shop` command to view the items for sale.
         """
         if args is None:
             args = ""
@@ -142,7 +251,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             case "debt increase":
                 await self.buy_debt_increase(ctx, args)
             case _:
-                await ctx.send("Invalid store item")
+                await ctx.send("Invalid shop item")
 
     async def buy_bonus_genre(self, ctx, args):
         if len(args) == 0:
@@ -150,7 +259,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             return
         genre = " ".join(args.split()).lower()
         user_id = str(ctx.author.id)
-        self.game.spend_cranes(user_id, 200)
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+        price = shop_items["bonus_genre"]["price"]
+        self.game.spend_cranes(user_id, price)
         self.game.add_bonus_genre(genre)
         self.journal(
             {
@@ -158,6 +270,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 "user": user_id,
                 "item": "bonus genre",
                 "genre": genre,
+                "price": price,
             }
         )
         await ctx.send(f"New bonus genre active: {genre}")
@@ -172,7 +285,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             await ctx.send("Target player is not registered!")
             return
         user_id = str(ctx.author.id)
-        self.game.spend_cranes(user_id, 20)
+        with open(self.shop_path) as file_handle:
+            shop_items = yaml.load(file_handle, Loader=yaml.FullLoader)
+        price = shop_items["bonus_genre"]["price"]
+        self.game.spend_cranes(user_id, price)
         self.game.add_debt(target_player.user_id, 10000)
         self.journal(
             {
@@ -180,6 +296,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 "user": user_id,
                 "item": "debt increase",
                 "target": target_player.user_id,
+                "price": price,
             }
         )
         await ctx.send(

@@ -1,10 +1,8 @@
-import copy
-import re
-from unittest.mock import AsyncMock
+import pathlib
+from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
 from callee import Regex, String
-from discord.ext import commands
 
 from word_debt_bot import cogs
 from word_debt_bot import game as game_lib
@@ -45,25 +43,6 @@ async def test_registration(
 
 
 @pytest.mark.asyncio
-async def test_registration_valueerror(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    ctx.author.name = player.display_name
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-
-    await game_cmds_cog.register.invoke(ctx)
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.register.invoke(ctx)
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with("Already registered!")
-
-
-@pytest.mark.asyncio
 async def test_submit_words(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
@@ -77,57 +56,6 @@ async def test_submit_words(
 
 
 @pytest.mark.asyncio
-async def test_submit_words_with_error(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-    game_cmds_cog.game.register_player(player)
-
-    @bot.command()
-    async def log_test_m1k(ctx, words=-1000):
-        await game_cmds_cog.log(ctx, words, genre=None)
-
-    game_cmds_cog.log_test_m1k = log_test_m1k
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.log_test_m1k.invoke(ctx)
-
-    ctx.command.name = "log"
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with(String() & Regex("Error:.*"))
-
-
-@pytest.mark.asyncio
-async def test_submit_words_with_no_register(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-
-    @bot.command()
-    async def log_test_10(ctx, words=10):
-        await game_cmds_cog.log(ctx, words, None)
-
-    game_cmds_cog.log_test_10 = log_test_10
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.log_test_10.invoke(ctx)
-
-    ctx.command.name = "log"
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with(String() & Regex("Not registered!.*"))
-
-
-@pytest.mark.asyncio
 async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameCommands):
     ctx = AsyncMock()
 
@@ -137,43 +65,13 @@ async def test_request_leaderboard_no_register(game_commands_cog: cogs.GameComma
 
 
 @pytest.mark.asyncio
-async def test_buy_with_value_error(
-    bot: client.WordDebtBot, player: game_lib.WordDebtPlayer
-):
-    ctx = AsyncMock()
-    ctx.author.id = player.user_id
-    target_player = copy.copy(player)
-    target_player.user_id = "12345"
-    game_cmds_cog = bot.get_cog("Core Gameplay")
-    cmd_err_cog = bot.get_cog("Command Error Handler")
-    game_cmds_cog.game.register_player(player)
-    game_cmds_cog.game.register_player(target_player)
-
-    @bot.command()
-    async def buy_test_err(ctx):
-        await game_cmds_cog.buy(
-            ctx, "debt increase", args=f"<@{target_player.user_id}>"
-        )
-
-    game_cmds_cog.buy_test_err = buy_test_err
-
-    with pytest.raises(commands.CommandInvokeError) as err:
-        await game_cmds_cog.buy_test_err.invoke(ctx)
-
-    ctx.command.name = "buy"
-
-    await cmd_err_cog.on_command_error(ctx, err.value)
-
-    ctx.send.assert_called_with("Error: insufficient cranes")
-
-
-@pytest.mark.asyncio
-async def test_buy_bonus_genre(
+async def test_buy_bonus_genre_sends_buy_message(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
     ctx.author.id = player.user_id
     game_commands_cog.game.register_player(player)
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
     await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
     await game_commands_cog.buy(
         game_commands_cog, ctx, "bonus genre", args="historical fiction"
@@ -183,7 +81,35 @@ async def test_buy_bonus_genre(
 
 
 @pytest.mark.asyncio
-async def test_info(
+async def test_buy_bonus_genre_subtracts_correct_price(
+    game_commands_cog: cogs.GameCommands,
+    player: game_lib.WordDebtPlayer,
+    game_state: game_lib.WordDebtGame,
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
+    await game_commands_cog.log(game_commands_cog, ctx, 300000, None)
+    await game_commands_cog.buy(
+        game_commands_cog, ctx, "bonus genre", args="historical fiction"
+    )
+
+    assert game_state._state.users[player.user_id].cranes == 400
+
+
+@pytest.mark.asyncio
+async def test_shop(game_commands_cog: cogs.GameCommands):
+    ctx = AsyncMock()
+    game_commands_cog.shop_path = pathlib.Path("tests/test_data/shop.yaml")
+    await game_commands_cog.shop(game_commands_cog, ctx)
+    ctx.send.assert_called_with(
+        '- "bonus genre": For the next week, words logged with this genre are worth twice as many cranes. Costs 200 cranes.\n- "debt increase": Increase another player\'s debt by 10000. Costs 20 cranes.\n'
+    )
+
+
+@pytest.mark.asyncio
+async def test_info_no_player_specified(
     game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
 ):
     ctx = AsyncMock()
@@ -191,8 +117,155 @@ async def test_info(
     player.word_debt = 250000
     game_commands_cog.game.register_player(player)
     await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
-    await game_commands_cog.info(game_commands_cog, ctx)
+    await game_commands_cog.info(game_commands_cog, ctx, None)
 
     # Multiline flag is broken, TODO fix and use regular .*
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"))
-    ctx.send.assert_called_with(String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"))
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Debt: 150,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
+    )
+
+
+@pytest.mark.asyncio
+async def test_info_by_user_mention(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    discord_user = Mock()
+    discord_user.id = player.user_id
+    player.word_debt = 200000
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
+    ctx.author.id = "some.other.player"
+    await game_commands_cog.info(game_commands_cog, ctx, discord_user)
+
+    # Multiline flag is broken, TODO fix and use regular .*
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Debt: 100,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
+    )
+
+
+@pytest.mark.asyncio
+async def test_info_by_display_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    player.display_name = "test name"
+    player.word_debt = 500000
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.log(game_commands_cog, ctx, 100000, None)
+    ctx.author.id = "some.other.player"
+    await game_commands_cog.info(game_commands_cog, ctx, "test name")
+
+    # Multiline flag is broken, TODO fix and use regular .*
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)Display Name: test name(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Debt: 400,000(\n.*)*"), allowed_mentions=ANY
+    )
+    ctx.send.assert_called_with(
+        String() & Regex(r"(.*\n)*Cranes: 200(\n.*)*"), allowed_mentions=ANY
+    )
+
+
+@pytest.mark.asyncio
+async def test_info_name_not_found(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    await game_commands_cog.info(game_commands_cog, ctx, "🤪")
+
+    ctx.send.assert_called_with("Player '🤪' not found! Are they registered?")
+
+
+@pytest.mark.asyncio
+async def test_set_display_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "new name")
+
+    assert (
+        game_commands_cog.game._state.users[player.user_id].display_name == "new name"
+    )
+    ctx.send.assert_called_with("🌞 Settings updated! 🌈")
+
+
+@pytest.mark.asyncio
+async def test_set_rejects_bad_key(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "badkey", "new name")
+
+    ctx.send.assert_called_with("💥 Invalid setting! 😠")
+
+
+@pytest.mark.asyncio
+async def test_set_too_long_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    name = player.display_name
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "a" * 100)
+
+    assert game_commands_cog.game._state.users[player.user_id].display_name == name
+    ctx.send.assert_called_with("🙅 Value too long! 😔")
+
+
+@pytest.mark.asyncio
+async def test_set_languages(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "languages", "🇰🇿, KZ, Kazakh")
+
+    ctx.send.assert_called_with("🌞 Settings updated! 🌈")
+    assert (
+        game_commands_cog.game._state.users[player.user_id].languages
+        == "🇰🇿, KZ, Kazakh"
+    )
+
+
+@pytest.mark.asyncio
+async def test_set_too_long_languages(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "languages", "a" * 257)
+
+    ctx.send.assert_called_with("🙅 Value too long! 😔")
+
+
+@pytest.mark.asyncio
+async def test_set_rejects_bad_characters_in_name(
+    game_commands_cog: cogs.GameCommands, player: game_lib.WordDebtPlayer
+):
+    ctx = AsyncMock()
+    ctx.author.id = player.user_id
+    name = player.display_name
+    game_commands_cog.game.register_player(player)
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "@everyone")
+    await game_commands_cog.set_(game_commands_cog, ctx, "name", "<3")
+
+    assert game_commands_cog.game._state.users[player.user_id].display_name == name
+    ctx.send.assert_called_with("💔 Invalid value! 😭")

@@ -20,7 +20,7 @@ async def test_basic_usage(bot):
 
 
 @pytest.mark.asyncio
-async def test_bonus_genre(bot):
+async def test_bonus_genre_gives_extra_cranes(bot):
     await dpytest.message(".register")
     await dpytest.message(".log 100000")
     await dpytest.empty_queue()
@@ -35,7 +35,7 @@ async def test_bonus_genre(bot):
 
 
 @pytest.mark.asyncio
-async def test_bonus_genre(bot):
+async def test_bonus_genre_no_genre_specified(bot):
     await dpytest.message(".register")
     await dpytest.message(".log 100000")
     await dpytest.empty_queue()

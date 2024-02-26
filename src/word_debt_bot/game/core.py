@@ -62,12 +62,25 @@ class WordDebtGame:
     def register_player(self, player: WordDebtPlayer):
         state = self._state
         if player.user_id in state.users:
-            raise ValueError(f"Player with id {player.user_id} already exists")
+            raise ValueError(f"already registered!")
         state.users[player.user_id] = player
         self._state = state
 
-    def get_player(self, player_id: str) -> WordDebtPlayer | None:
-        return self._state.users.get(player_id)
+    def get_player(self, player_id: str, optional=True) -> WordDebtPlayer | None:
+        if optional:  # Don't throw a KeyError if missing
+            return self._state.users.get(player_id)
+        else:
+            return self._state.users[player_id]
+
+    def get_player_by_display_name(
+        self, display_name: str, optional=True
+    ) -> WordDebtPlayer | None:
+        for player in self._state.users.values():
+            if player.display_name == display_name:
+                return player
+        if not optional:
+            raise ValueError(f"no player with display name {display_name}")
+        return None
 
     def submit_words(
         self, player_id: str, amount: int, genre: str | None = None
@@ -83,6 +96,16 @@ class WordDebtGame:
         player.crane_payment_rollover %= 1000
         self._state = state
         return player.word_debt
+
+    def set_player_languages(self, player_id: str, languages: str):
+        state = self._state
+        state.users[player_id].languages = languages
+        self._state = state
+
+    def set_player_display_name(self, player_id: str, display_name: str):
+        state = self._state
+        state.users[player_id].display_name = display_name
+        self._state = state
 
     def add_debt(self, player_id: str, amount: int):
         if amount <= 0:

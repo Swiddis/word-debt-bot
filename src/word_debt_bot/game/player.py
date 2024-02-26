@@ -10,3 +10,4 @@ class WordDebtPlayer:
     word_debt: int = 0
     crane_payment_rollover: int = 0
     cranes: int = 0
+    languages: str = ""
