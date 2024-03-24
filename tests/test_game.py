@@ -1,3 +1,8 @@
+import json
+import pathlib
+from dataclasses import asdict
+from datetime import datetime
+
 import pytest
 
 from word_debt_bot import game
@@ -5,15 +10,47 @@ from word_debt_bot import game
 from .fixtures import *
 
 
-def test_game_initializes(game_state: game.WordDebtGame):
-    assert game_state._state == {}
+def test_game_initializes_with_correct_version(game_state: game.WordDebtGame):
+    assert game_state._state.version == 1
+
+
+def test_game_migration_v0_to_v1(tmp_path: pathlib.Path):
+    state_v0 = {
+        "197": {
+            "user_id": "197",
+            "display_name": "abc",
+            "word_debt": 100,
+            "crane_payment_rollover": 0,
+            "cranes": 0,
+        }
+    }
+    with open(tmp_path / "state.json", "w") as statefile:
+        json.dump(state_v0, statefile)
+    game_instance = game.WordDebtGame(tmp_path / "state.json")
+    assert game_instance._state.version == 1
+    migrated_state_dict = asdict(game_instance._state)["users"]
+    migrated_state_dict["197"].pop("languages")
+    assert migrated_state_dict == state_v0
+
+
+def test_game_prunes_modifiers(game_state: game.WordDebtGame):
+    state = game_state._state
+    now = datetime.now().timestamp()
+    state.modifiers = [
+        {"type": "bonus_genre", "genre": "sci-fi", "expires": now - 1000.0}
+    ]
+    game_state._state = state
+
+    game_state._prune_expired_modifiers()
+
+    assert len(game_state._state.modifiers) == 0
 
 
 def test_game_registers_player(
     game_state: game.WordDebtGame, player: game.WordDebtPlayer
 ):
     game_state.register_player(player)
-    assert game_state._state[player.user_id] == player
+    assert game_state._state.users[player.user_id] == player
 
 
 def test_game_refuses_duplicate_registration(game_state: game.WordDebtGame, player):
@@ -28,7 +65,7 @@ def test_game_accepts_payment(
     game_state.register_player(player)
     game_state.add_debt(player.user_id, 10000)
     game_state.submit_words(player.user_id, 2500)
-    updated = game_state._state[player.user_id]
+    updated = game_state._state.users[player.user_id]
     assert updated.word_debt == 7500
     assert updated.cranes == 4
     assert updated.crane_payment_rollover == 500
@@ -41,7 +78,7 @@ def test_game_handles_rollover(
     game_state.add_debt(player.user_id, 10000)
     game_state.submit_words(player.user_id, 1250)
     game_state.submit_words(player.user_id, 1250)
-    updated = game_state._state[player.user_id]
+    updated = game_state._state.users[player.user_id]
     assert updated.word_debt == 7500
     assert updated.cranes == 4
     assert updated.crane_payment_rollover == 500
@@ -53,7 +90,7 @@ def test_game_handles_empty_debt(
     game_state.register_player(player)
     game_state.add_debt(player.user_id, 5000)
     game_state.submit_words(player.user_id, 10000)
-    updated = game_state._state[player.user_id]
+    updated = game_state._state.users[player.user_id]
     assert updated.word_debt == 0
     assert updated.cranes == 20
 

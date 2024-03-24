@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-import pathlib
+from pathlib import Path
 
 import discord
 
@@ -19,24 +19,34 @@ def get_token(token_path):
         return token_file.read()
 
 
-if __name__ == "__main__":
-    # Config
-    intents = discord.Intents.default()
-    intents.message_content = True
-    handler = logging.FileHandler(
-        filename=pathlib.Path("data/discord.log"), encoding="utf-8", mode="a"
-    )
+def make_bot(intents=None):
+    if intents is None:
+        intents = discord.Intents.default()
+        intents.message_content = True
+    return WordDebtBot(".", intents=intents)
 
-    # Loading data
-    game = WordDebtGame(pathlib.Path("data/prod.json"))
-    token = get_token(pathlib.Path("data/TOKEN"))
 
-    # Starting the bot
-    bot = WordDebtBot(".", intents=intents)
-
+def add_cogs(bot: WordDebtBot, game: WordDebtGame):
     loop = asyncio.get_event_loop()
-    tasks = [loop.create_task(bot.add_cog(cogs.GameCommands(bot, game)))]
+    tasks = [
+        loop.create_task(bot.add_cog(cogs.GameCommands(bot, game))),
+        loop.create_task(bot.add_cog(cogs.CmdErrHandler(bot, game))),
+    ]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
 
+
+def main(log_file: Path, state_file: Path, token_file: Path):
+    # Set up bot
+    game = WordDebtGame(state_file)
+    bot = make_bot()
+    add_cogs(bot, game)
+
+    # Startup
+    token = get_token(token_file)
+    handler = logging.FileHandler(filename=log_file, encoding="utf-8", mode="a")
     bot.run(token, log_handler=handler, log_level=logging.INFO)
+
+
+if __name__ == "__main__":
+    main(Path("data/discord.log"), Path("data/prod.json"), Path("data/TOKEN"))
