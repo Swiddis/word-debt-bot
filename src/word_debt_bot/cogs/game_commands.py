@@ -192,10 +192,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         journal_entry = {
             "command": "log",
             "words": words,
+            "unit": unit,
             "user": str(ctx.author.id),
+            "genre": genre,
         }
-        if genre:
-            journal_entry["genre"] = genre
         self.journal(journal_entry)
         await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
