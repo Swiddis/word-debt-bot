@@ -43,3 +43,13 @@ async def test_bonus_genre_no_genre_specified(bot):
     await dpytest.message('.buy "bonus genre"')
 
     assert dpytest.verify().message().content("Must specify a genre!")
+
+
+@pytest.mark.asyncio
+async def test_units(bot):
+    await dpytest.message(".register")
+    await dpytest.message(".log 1500 zi")
+    await dpytest.message(".log 1 hours")
+    assert dpytest.verify().message().contains().content("Registered")
+    assert dpytest.verify().message().contains().content("9,000")
+    assert dpytest.verify().message().contains().content("1,000")
