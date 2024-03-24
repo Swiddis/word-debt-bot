@@ -50,7 +50,7 @@ async def test_submit_words(
     ctx.author.id = player.user_id
     game_commands_cog.game.register_player(player)
 
-    await game_commands_cog.log(game_commands_cog, ctx, 1000, genre=None)
+    await game_commands_cog.log(game_commands_cog, ctx, 1000, "words", genre=None)
 
     ctx.send.assert_called_with(String() & Regex("Logged 1,000 words!.*"))
 
