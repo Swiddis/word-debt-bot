@@ -22,12 +22,14 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         self,
         bot: client.WordDebtBot,
         game: game.WordDebtGame,
-        journal_path: pathlib.Path = pathlib.Path("data/journal.ndjson"),
+        journal: game.WordDebtJournal = game.WordDebtJournal(
+            pathlib.Path("data/journal.ndjson")
+        ),
         shop_path: pathlib.Path = pathlib.Path("data/shop.yaml"),
     ):
         self.bot = bot
         self.game = game
-        self.journal_path = journal_path
+        self.journal = journal
         self.shop_path = shop_path
 
         if not os.path.exists(self.shop_path):
@@ -48,11 +50,6 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                     file_handle,
                     Dumper=yaml.Dumper,
                 )
-
-    def journal(self, entry: dict) -> None:
-        entry["time"] = datetime.now().timestamp()
-        with open(self.journal_path, "a") as logfile:
-            logfile.write(json.dumps(entry) + "\n")
 
     @commands.command(name="ping")
     async def ping(self, ctx):
@@ -80,7 +77,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         """
         player = game.WordDebtPlayer(str(ctx.author.id), ctx.author.name, 10_000)
         self.game.register_player(player)
-        self.journal({"command": "register", "user": str(ctx.author.id)})
+        self.journal.append({"command": "register", "user": str(ctx.author.id)})
         await ctx.send("Registered with 10,000 debt!")
 
     @commands.command(name="info")
@@ -110,12 +107,15 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             await ctx.send(f"Player '{name}' not found! Are they registered?")
             return
 
+        total = self.journal.accumulate_read(player.user_id).get(player.user_id, 0)
+
         await ctx.send(
             f"Info for <@{player.user_id}> \n"
             f"Display Name: {player.display_name}\n"
             f"Languages: {player.languages}\n"
             f"Debt: {player.word_debt:,}\n"
-            f"Cranes: {player.cranes:,}\n",
+            f"Cranes: {player.cranes:,}\n"
+            f"Total words read: {total:,}\n",
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
@@ -138,7 +138,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 await ctx.send("🙅 Value too long! 😔")
                 return
             self.game.set_player_display_name(str(ctx.author.id), value)
-            self.journal(
+            self.journal.append(
                 {
                     "command": "set",
                     "user": str(ctx.author.id),
@@ -151,7 +151,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
                 await ctx.send("🙅 Value too long! 😔")
                 return
             self.game.set_player_languages(str(ctx.author.id), value)
-            self.journal(
+            self.journal.append(
                 {
                     "command": "set",
                     "user": str(ctx.author.id),
@@ -196,7 +196,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             "user": str(ctx.author.id),
             "genre": genre,
         }
-        self.journal(journal_entry)
+        self.journal.append(journal_entry)
         await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
     @commands.command(name="leaderboard")
@@ -273,7 +273,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         price = shop_items["bonus_genre"]["price"]
         self.game.spend_cranes(user_id, price)
         self.game.add_bonus_genre(genre)
-        self.journal(
+        self.journal.append(
             {
                 "command": "buy",
                 "user": user_id,
@@ -299,7 +299,7 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         price = shop_items["bonus_genre"]["price"]
         self.game.spend_cranes(user_id, price)
         self.game.add_debt(target_player.user_id, 10000)
-        self.journal(
+        self.journal.append(
             {
                 "command": "buy",
                 "user": user_id,
