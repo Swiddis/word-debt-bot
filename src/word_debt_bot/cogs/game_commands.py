@@ -107,12 +107,15 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
             await ctx.send(f"Player '{name}' not found! Are they registered?")
             return
 
+        total = self.journal.accumulate_read(player.user_id).get(player.user_id, 0)
+
         await ctx.send(
             f"Info for <@{player.user_id}> \n"
             f"Display Name: {player.display_name}\n"
             f"Languages: {player.languages}\n"
             f"Debt: {player.word_debt:,}\n"
-            f"Cranes: {player.cranes:,}\n",
+            f"Cranes: {player.cranes:,}\n"
+            f"Total words read: {total:,}\n",
             allowed_mentions=discord.AllowedMentions.none(),
         )
 
