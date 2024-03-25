@@ -14,6 +14,8 @@ import yaml
 import word_debt_bot.client as client
 import word_debt_bot.game as game
 
+UNITS = {"words": 1.0, "zi": 1.0 / 1.5, "ji": 0.5, "hours": 8000.0}
+
 
 class GameCommands(commands.Cog, name="Core Gameplay"):
     def __init__(
@@ -168,6 +170,10 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
         self,
         ctx,
         words: int = commands.parameter(description="The amount of words to log."),
+        unit: str = commands.parameter(
+            default="words",
+            description=f"The unit for logging. Options: {sorted(set(UNITS))}",
+        ),
         genre: typing.Optional[str] = commands.parameter(
             default=None,
             displayed_default=inspect.Parameter.empty,
@@ -179,14 +185,17 @@ class GameCommands(commands.Cog, name="Core Gameplay"):
 
         You can also specify a genre to potentially get bonuses. Having debt isn't necessary in order to log.
         """
+        if unit not in UNITS:
+            genre, unit = unit, "words"
+        words = round(words * UNITS.get(unit, 1.0))
         new_debt = self.game.submit_words(str(ctx.author.id), words, genre)
         journal_entry = {
             "command": "log",
             "words": words,
+            "unit": unit,
             "user": str(ctx.author.id),
+            "genre": genre,
         }
-        if genre:
-            journal_entry["genre"] = genre
         self.journal(journal_entry)
         await ctx.send(f"Logged {words:,} words! New debt: {new_debt:,}")
 
